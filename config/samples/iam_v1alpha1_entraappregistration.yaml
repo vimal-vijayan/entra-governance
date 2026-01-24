@@ -1,0 +1,9 @@
+apiVersion: iam.entra.governance.com/v1alpha1
+kind: EntraAppRegistration
+metadata:
+  labels:
+    app.kubernetes.io/name: entra-governance
+    app.kubernetes.io/managed-by: kustomize
+  name: entraappregistration-sample
+spec:
+  # TODO(user): Add fields here
