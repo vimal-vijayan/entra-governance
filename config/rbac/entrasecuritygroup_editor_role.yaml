@@ -1,13 +1,15 @@
----
+# permissions for end users to edit entrasecuritygroups.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: manager-role
+  labels:
+    app.kubernetes.io/name: entra-governance
+    app.kubernetes.io/managed-by: kustomize
+  name: entrasecuritygroup-editor-role
 rules:
 - apiGroups:
   - iam.entra.governance.com
   resources:
-  - entraappregistrations
   - entrasecuritygroups
   verbs:
   - create
@@ -20,16 +22,6 @@ rules:
 - apiGroups:
   - iam.entra.governance.com
   resources:
-  - entraappregistrations/finalizers
-  - entrasecuritygroups/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - iam.entra.governance.com
-  resources:
-  - entraappregistrations/status
   - entrasecuritygroups/status
   verbs:
   - get
-  - patch
-  - update

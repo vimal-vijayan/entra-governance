@@ -1,0 +1,23 @@
+# permissions for end users to view entrasecuritygroups.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: entra-governance
+    app.kubernetes.io/managed-by: kustomize
+  name: entrasecuritygroup-viewer-role
+rules:
+- apiGroups:
+  - iam.entra.governance.com
+  resources:
+  - entrasecuritygroups
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - iam.entra.governance.com
+  resources:
+  - entrasecuritygroups/status
+  verbs:
+  - get

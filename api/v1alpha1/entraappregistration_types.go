@@ -24,20 +24,6 @@ import (
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
 // EntraAppRegistrationSpec defines the desired state of EntraAppRegistration
-type EntraAppRegistrationSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
-
-	// Foo is an example field of EntraAppRegistration. Edit entraappregistration_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
-}
-
-// EntraAppRegistrationStatus defines the observed state of EntraAppRegistration
-type EntraAppRegistrationStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
-}
-
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 
@@ -49,6 +35,41 @@ type EntraAppRegistration struct {
 	Spec   EntraAppRegistrationSpec   `json:"spec,omitempty"`
 	Status EntraAppRegistrationStatus `json:"status,omitempty"`
 }
+
+type EntraAppRegistrationSpec struct {
+	// +kubebuilder:validation:Required
+	ForProvider *AppRegCredConfig `json:"forProvider"`
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=120
+	// +kubebuilder:validation:Pattern=`^[^<>%&:\\?\/\*]+$`
+	Name        string            `json:"name,omitempty"`
+}
+
+type AppRegCredConfig struct {
+	// +kubebuilder:validation:Optional
+	ServiceAccountRef    string `json:"serviceAccountRef,omitempty"`
+	// +kubebuilder:validation:Optional
+	CredentialsSecretRef string `json:"credentialsSecretRef,omitempty"`
+}
+
+// EntraAppRegistrationStatus defines the observed state of EntraAppRegistration
+type EntraAppRegistrationStatus struct {
+	// ObservedGeneration is the latest observed generation of the resource.
+	// +optional
+	ObservedGeneration int64 `json:"observedGeneration,omitempty"`
+	// +optional
+	Conditions []metav1.Condition `json:"conditions,omitempty"`
+	// +kubebuilder:validation:Enum=Pending;Available;Failed
+	Phase 	string             `json:"phase,omitempty"`
+	// AppRegistrationName is the name of the created App Registration in Entra ID
+	AppRegistrationName string             `json:"appRegistrationName,omitempty"`
+	// AppRegistrationID is the ID of the created App Registration in Entra ID
+	AppRegistrationID   string             `json:"appRegistrationID,omitempty"`
+	// AppRegistrationObjID is the Object ID of the created App Registration in Entra ID
+	AppRegistrationObjID string             `json:"appRegistrationObjID,omitempty"`
+}
+
 
 // +kubebuilder:object:root=true
 

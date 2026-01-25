@@ -60,3 +60,8 @@ func (r *EntraAppRegistrationReconciler) SetupWithManager(mgr ctrl.Manager) erro
 		For(&iamv1alpha1.EntraAppRegistration{}).
 		Complete(r)
 }
+
+
+func (r *EntraAppRegistrationReconciler) GetCredentials(ctx context.Context, appReg iamv1alpha1.EntraAppRegistration) (string, error) {
+	return "", nil
+}

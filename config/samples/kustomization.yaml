@@ -1,4 +1,5 @@
 ## Append samples of your project ##
 resources:
 - iam_v1alpha1_entraappregistration.yaml
+- iam_v1alpha1_entrasecuritygroup.yaml
 # +kubebuilder:scaffold:manifestskustomizesamples
