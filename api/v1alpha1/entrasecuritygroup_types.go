@@ -22,29 +22,29 @@ import (
 
 // EntraSecurityGroupSpec defines the desired state of EntraSecurityGroup
 type EntraSecurityGroupSpec struct {
-	ForProvider     *ProviderSpec `json:"forProvider,omitempty"`
+	ForProvider *ProviderSpec `json:"forProvider,omitempty"`
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:MinLength=1
 	// +kubebuilder:validation:MaxLength=256
 	// +kubebuilder:validation:Pattern=`^[^<>%&:\\?\/\*]+$`
-	Name            string        `json:"name,omitempty"`
+	Name string `json:"name,omitempty"`
 	// +kubebuilder:validation:Optional
-	Description     string        `json:"description,omitempty"`
+	Description string `json:"description,omitempty"`
 	// TODO: add a validation webhook for allowed values ("Unified", "DynamicMembership")
 	// +kubebuilder:validation:Optional
-	GroupTypes      []string      `json:"groupTypes,omitempty"`
+	GroupTypes []string `json:"groupTypes,omitempty"`
 	// +kubebuilder:validation:Optional
-	MailNickname    string        `json:"mailNickname,omitempty"`
+	MailNickname string `json:"mailNickname,omitempty"`
 	// +kubebuilder:validation:Optional
 	// +kubebuilder:default=false
-	MailEnabled     bool          `json:"mailEnabled,omitempty"`
+	MailEnabled bool `json:"mailEnabled,omitempty"`
 	// +kubebuilder:validation:Optional
 	// +kubebuilder:default=true
-	SecurityEnabled bool          `json:"securityEnabled,omitempty"`
+	SecurityEnabled bool `json:"securityEnabled,omitempty"`
 	// +kubebuilder:validation:Optional
-	Owners          []string      `json:"owners,omitempty"`
+	Owners []string `json:"owners,omitempty"`
 	// +kubebuilder:validation:Optional
-	Members         []string      `json:"members,omitempty"`
+	Members []string `json:"members,omitempty"`
 }
 
 type ProviderSpec struct {
@@ -57,13 +57,13 @@ type EntraSecurityGroupStatus struct {
 	// ObservedGeneration is the latest observed generation of the resource.
 	ObservedGeneration int64 `json:"observedGeneration,omitempty"`
 	// Conditions of the EntraSecurityGroup.
-	Conditions         []metav1.Condition `json:"conditions,omitempty"`
+	Conditions []metav1.Condition `json:"conditions,omitempty"`
 	// Phase represents the current phase of the EntraSecurityGroup.
-	Phase              string            `json:"phase,omitempty"`
+	Phase string `json:"phase,omitempty"`
 	// ID is the unique identifier of the EntraSecurityGroup in the external system.
-	ID                 string            `json:"id,omitempty"`
+	ID string `json:"id,omitempty"`
 	// DisplayName is the display name of the EntraSecurityGroup.
-	DisplayName       string            `json:"displayName,omitempty"`
+	DisplayName string `json:"displayName,omitempty"`
 }
 
 // +kubebuilder:object:root=true

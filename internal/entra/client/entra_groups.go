@@ -4,48 +4,28 @@ import (
 	"context"
 	"fmt"
 
-	graphmodels "github.com/microsoftgraph/msgraph-sdk-go/models"
+	"github.com/microsoftgraph/msgraph-sdk-go/models"
 	v1alpha1 "github.com/vimal-vijayan/entra-governance/api/v1alpha1"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 )
-
-type EntraGroupClient interface {
-	CreateEntraGroup(entraGroup v1alpha1.EntraSecurityGroupSpec) (*GroupCreateResponse, error)
-	GetEntraGroupNameByID(groupID string) (string, error)
-	DeleteEntraGroupByID(groupID string) error
-	// AddMemberToGroup(groupID, userID string) error
-	// RemoveMemberFromGroup(groupID, userID string) error
-}
 
 type GroupCreateResponse struct {
 	DisplayName string `json:"displayName"`
 	ID          string `json:"id"`
 }
 
-func (c *GraphClient) CreateEntraGroup(entraGroup v1alpha1.EntraSecurityGroupSpec) (*GroupCreateResponse, error) {
+func (c *GraphClient) CreateEntraGroup(ctx context.Context, entraGroup v1alpha1.EntraSecurityGroupSpec) (*GroupCreateResponse, error) {
 
-	if err := c.ensureClient(); err != nil {
-		return nil, err
-	}
-
-	// create the group using the Microsoft Graph SDK
-
-	requestBody := graphmodels.NewGroup()
-	description := entraGroup.Description
-	displayName := entraGroup.Name
-	mailEnabled := entraGroup.MailEnabled
-	mailNickname := entraGroup.MailNickname
-	securityEnabled := entraGroup.SecurityEnabled
-	groupTypes := entraGroup.GroupTypes
-
-	requestBody.SetGroupTypes(groupTypes)
-	requestBody.SetDescription(&description)
-	requestBody.SetDisplayName(&displayName)
-	requestBody.SetMailEnabled(&mailEnabled)
-	requestBody.SetMailNickname(&mailNickname)
-	requestBody.SetSecurityEnabled(&securityEnabled)
+	group := models.NewGroup()
+	group.SetDisplayName(&entraGroup.Name)
+	group.SetDescription(&entraGroup.Description)
+	group.SetMailEnabled(&entraGroup.MailEnabled)
+	group.SetMailNickname(&entraGroup.MailNickname)
+	group.SetSecurityEnabled(&entraGroup.SecurityEnabled)
+	group.SetGroupTypes(entraGroup.GroupTypes)
 
 	// Call the SDK to create the group
-	groups, err := c.sdk.Groups().Post(context.Background(), requestBody, nil)
+	groups, err := c.sdk.Groups().Post(ctx, group, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create group: %v", err)
 	}
@@ -56,21 +36,34 @@ func (c *GraphClient) CreateEntraGroup(entraGroup v1alpha1.EntraSecurityGroupSpe
 	}, nil
 }
 
-func (c *GraphClient) GetEntraGroupNameByID(groupID string) (string, error) {
-	if err := c.ensureClient(); err != nil {
+func (c *GraphClient) GetEntraGroupByID(ctx context.Context, groupID string) error {
+	logger := log.FromContext(ctx)
 
-		return "Dummy Group Name", nil
+	if groupID == "" {
+		logger.Error(fmt.Errorf("groupID cannot be empty"), "invalid groupID")
+		return fmt.Errorf("group id is empty")
 	}
 
-	return "", nil
+	groups, err := c.sdk.Groups().ByGroupId(groupID).Get(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("failed to get group by ID: %v", err)
+	}
+
+	if groups.GetId() == nil {
+		return fmt.Errorf("group with ID %s not found", groupID)
+	}
+
+	logger.Info("successfully fetched group", "groupID", *groups.GetId())
+	return nil
 }
 
-func (c *GraphClient) DeleteEntraGroupByID(groupID string) error {
+func (c *GraphClient) DeleteEntraGroupByID(ctx context.Context, groupID string) error {
+
 	if err := c.ensureClient(); err != nil {
 		return err
 	}
-	// call the function to delete group by ID
 
+	// call the function to delete group by ID
 	return nil
 }
 

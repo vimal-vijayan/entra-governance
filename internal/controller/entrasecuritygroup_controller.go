@@ -2,7 +2,6 @@ package controller
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -12,14 +11,15 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	iamv1alpha1 "github.com/vimal-vijayan/entra-governance/api/v1alpha1"
-	entraClient "github.com/vimal-vijayan/entra-governance/internal/entra/client"
+	entraGroup "github.com/vimal-vijayan/entra-governance/api/v1alpha1"
+	"github.com/vimal-vijayan/entra-governance/internal/entra/groups"
 )
 
 // EntraSecurityGroupReconciler reconciles a EntraSecurityGroup object
 type EntraSecurityGroupReconciler struct {
 	client.Client
-	Scheme *runtime.Scheme
+	Scheme       *runtime.Scheme
+	GroupService *groups.Service
 }
 
 const (
@@ -37,7 +37,7 @@ func (r *EntraSecurityGroupReconciler) Reconcile(ctx context.Context, req ctrl.R
 	logger := log.FromContext(ctx)
 	logger.Info("------------------ Reconciling EntraSecurityGroup --------------------", "name", req.Name, "namespace", req.Namespace)
 
-	entraGroup := &iamv1alpha1.EntraSecurityGroup{}
+	entraGroup := &entraGroup.EntraSecurityGroup{}
 	if err := r.Get(ctx, req.NamespacedName, entraGroup); err != nil {
 		if apierrors.IsNotFound(err) {
 			logger.Info("EntraSecurityGroup resource not found. skipping reconciliation.")
@@ -61,25 +61,31 @@ func (r *EntraSecurityGroupReconciler) Reconcile(ctx context.Context, req ctrl.R
 	// Reconciliation logic goes here
 	if entraGroup.Status.ID != "" {
 		// Group already exists in status, checking if group exists in Entra
+		err := r.GroupService.Get(ctx, *entraGroup, entraGroup.Status.ID)
+		if err != nil {
+			logger.Error(err, "failed to get Entra Security Group by ID from status", "GroupID", entraGroup.Status.ID)
+			return ctrl.Result{RequeueAfter: defaultRequeueDuration}, err
+		}
 		logger.Info("entra security group already has GroupID in status. Skipping creation.", "GroupID", entraGroup.Status.ID)
 		return ctrl.Result{RequeueAfter: defaultRequeueDuration}, nil
 	}
 
 	// Create Entra Security Group
-	groupID, err := r.createEntraSecurityGroup(ctx, entraGroup)
+	groupId, groupName, err := r.GroupService.Create(ctx, *entraGroup)
 	if err != nil {
 		logger.Error(err, "failed to create Entra Security Group")
 		return ctrl.Result{RequeueAfter: defaultRequeueDuration}, err
 	}
 
 	// Update status with the created group ID
-	entraGroup.Status.ID = groupID.ID
+	entraGroup.Status.ID = groupId
+	entraGroup.Status.DisplayName = groupName
 	if err := r.Status().Update(ctx, entraGroup); err != nil {
 		logger.Error(err, "failed to update EntraSecurityGroup status with GroupID")
 		return ctrl.Result{RequeueAfter: defaultRequeueDuration}, err
 	}
-	
-	logger.Info("Successfully created Entra Security Group", "GroupID", groupID.ID)
+
+	logger.Info("Successfully created Entra Security Group", "GroupID", groupId, "DisplayName", groupName)
 
 	return ctrl.Result{RequeueAfter: defaultRequeueDuration}, nil
 }
@@ -87,12 +93,12 @@ func (r *EntraSecurityGroupReconciler) Reconcile(ctx context.Context, req ctrl.R
 // setupWithManager sets up the controller with the Manager.
 func (r *EntraSecurityGroupReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&iamv1alpha1.EntraSecurityGroup{}).
+		For(&entraGroup.EntraSecurityGroup{}).
 		Complete(r)
 }
 
 // ensure finalizer is present on the resource
-func (r *EntraSecurityGroupReconciler) ensureFinalizer(ctx context.Context, entraGroup *iamv1alpha1.EntraSecurityGroup) error {
+func (r *EntraSecurityGroupReconciler) ensureFinalizer(ctx context.Context, entraGroup *entraGroup.EntraSecurityGroup) error {
 	logger := log.FromContext(ctx)
 	if !controllerutil.ContainsFinalizer(entraGroup, entraSecurityGroupFinalizer) {
 		controllerutil.AddFinalizer(entraGroup, entraSecurityGroupFinalizer)
@@ -103,42 +109,4 @@ func (r *EntraSecurityGroupReconciler) ensureFinalizer(ctx context.Context, entr
 		logger.Info("finalizer added to EntraSecurityGroup")
 	}
 	return nil
-}
-
-// create entra security group in Entra using the client
-type createGroupResponse struct {
-	ID string
-	DisplayName string
-}
-
-func (r *EntraSecurityGroupReconciler) createEntraSecurityGroup(ctx context.Context, entraGroup *iamv1alpha1.EntraSecurityGroup) (*createGroupResponse, error) {
-	logger := log.FromContext(ctx)
-	logger.Info("creating entra security group in entra", "name", entraGroup.Spec.Name)
-
-	secretRef := entraClient.SecretRef{
-		Name:      entraGroup.Spec.ForProvider.CredentialSecretRef,
-		Namespace: entraGroup.Namespace,
-	}
-
-	// Initialize the Entra client
-	factory := entraClient.NewClientFactory(r.Client)
-	if entraGroup.Spec.ForProvider.CredentialSecretRef != "" {
-		sdk, err := factory.ForClientSecret(ctx, secretRef)
-
-		if err != nil {
-			logger.Error(err, "failed to initialize Entra client using secret reference")
-			return 	nil, err
-		}
-
-		entraClient := entraClient.NewGraphClient(sdk)
-		resp, err := entraClient.CreateEntraGroup(entraGroup.Spec)
-
-		return &createGroupResponse{
-			ID: resp.ID,
-			DisplayName: resp.DisplayName,
-		}, err
-	}
-
-	logger.Error(nil, "credentialSecretRef is not specified in the EntraSecurityGroup spec")
-	return nil, fmt.Errorf("credentialSecretRef is not specified in the EntraSecurityGroup spec")
 }

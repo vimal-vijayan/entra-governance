@@ -43,12 +43,12 @@ type EntraAppRegistrationSpec struct {
 	// +kubebuilder:validation:MinLength=1
 	// +kubebuilder:validation:MaxLength=120
 	// +kubebuilder:validation:Pattern=`^[^<>%&:\\?\/\*]+$`
-	Name        string            `json:"name,omitempty"`
+	Name string `json:"name,omitempty"`
 }
 
 type AppRegCredConfig struct {
 	// +kubebuilder:validation:Optional
-	ServiceAccountRef    string `json:"serviceAccountRef,omitempty"`
+	ServiceAccountRef string `json:"serviceAccountRef,omitempty"`
 	// +kubebuilder:validation:Optional
 	CredentialsSecretRef string `json:"credentialsSecretRef,omitempty"`
 }
@@ -61,15 +61,14 @@ type EntraAppRegistrationStatus struct {
 	// +optional
 	Conditions []metav1.Condition `json:"conditions,omitempty"`
 	// +kubebuilder:validation:Enum=Pending;Available;Failed
-	Phase 	string             `json:"phase,omitempty"`
+	Phase string `json:"phase,omitempty"`
 	// AppRegistrationName is the name of the created App Registration in Entra ID
-	AppRegistrationName string             `json:"appRegistrationName,omitempty"`
+	AppRegistrationName string `json:"appRegistrationName,omitempty"`
 	// AppRegistrationID is the ID of the created App Registration in Entra ID
-	AppRegistrationID   string             `json:"appRegistrationID,omitempty"`
+	AppRegistrationID string `json:"appRegistrationID,omitempty"`
 	// AppRegistrationObjID is the Object ID of the created App Registration in Entra ID
-	AppRegistrationObjID string             `json:"appRegistrationObjID,omitempty"`
+	AppRegistrationObjID string `json:"appRegistrationObjID,omitempty"`
 }
-
 
 // +kubebuilder:object:root=true
 

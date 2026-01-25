@@ -103,7 +103,6 @@ func getSecretData(secret *corev1.Secret, key string) (string, error) {
 	return string(value), nil
 }
 
-
 func NewClientFactory(k8s client.Client) *ClientFactory {
 	return &ClientFactory{k8s: k8s}
 }
