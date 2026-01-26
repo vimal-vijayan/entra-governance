@@ -14,10 +14,9 @@ spec:
   # groupTypes:
   #   - Unified
   owners:
-    - 93ae7387-40a8-4f68-93d0-bba960155bd8
+    - 93ae7387-40a8-4f68-93d0-bba960155bd8 # user
   members:
-    - 93ae7387-40a8-4f68-93d0-bba960155bd8
-  #   - 33333333-3333-3333-3333-333333333333
+    - 93ae7387-40a8-4f68-93d0-bba960155bd8 # user
+    - 51d399fb-e209-4240-afc1-08baa1e13023 # aks-cluster-admin
   forProvider:
     credentialSecretRef: entra-graph-credentials   # Kubernetes secret name
-    # serviceAccountRef: entra-operator-sa           # ServiceAccount with Graph permissions

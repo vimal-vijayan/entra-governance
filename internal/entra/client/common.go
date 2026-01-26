@@ -19,3 +19,16 @@ func (c *GraphClient) getUsers(ctx context.Context, user string) (string, error)
 	logger.Info("successfully fetched user", "userID", *resp.GetId())
 	return *resp.GetId(), nil
 }
+
+func (c *GraphClient) getGroups(ctx context.Context, group string) (string, error) {
+	logger := log.FromContext(ctx)
+	resp, err := c.sdk.Groups().ByGroupId(group).Get(ctx, nil)
+
+	if err != nil {
+		logger.Error(err, "failed to get group", "group", group)
+		return "", fmt.Errorf("failed to get group %w", err)
+	}
+
+	logger.Info("successfully fetched group", "groupID", *resp.GetId())
+	return *resp.GetId(), nil
+}

@@ -130,6 +130,21 @@ func (r *EntraSecurityGroupReconciler) ensureFinalizer(ctx context.Context, entr
 // Delete resource and remove finalizer
 func (r *EntraSecurityGroupReconciler) deleteResource(ctx context.Context, entraGroup *entraGroup.EntraSecurityGroup) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
+
+	// err := r.GroupService.Get(ctx, *entraGroup, entraGroup.Status.ID)
+	// if err != nil {
+	// 	logger.Error(err, "failed to get entra security group in entra before deletion")
+	// 	if apierrors.IsNotFound(err) || apierrors.IsInvalid(err) {
+	// 		// Group not found in Entra, remove finalizer
+	// 		return r.removeFinalizer(ctx, entraGroup)
+	// 	}
+	// }
+
+	if entraGroup.Status.ID == "" {
+		logger.Info("entra security group id is empty in status. skipping deletion in Entra.")
+		return r.removeFinalizer(ctx, entraGroup)
+	}
+
 	err := r.GroupService.Delete(ctx, *entraGroup, entraGroup.Status.ID)
 	if err != nil {
 		logger.Error(err, "failed to delete Entra Security Group in Entra")

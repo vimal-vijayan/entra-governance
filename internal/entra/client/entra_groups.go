@@ -37,12 +37,12 @@ func (c *GraphClient) CreateEntraGroup(ctx context.Context, entraGroup v1alpha1.
 
 	members := []string{}
 	if entraGroup.Members != nil {
-		for _, userObjId := range entraGroup.Members {
-			userID, err := c.getUsers(ctx, userObjId)
+		for _, memberID := range entraGroup.Members {
+			memberRef, err := c.resolveMemberReference(ctx, memberID)
 			if err != nil {
-				return nil, fmt.Errorf("failed to get member user ID: check if user exists or provide valid user object ID instead of user principal name: %v", err)
+				return nil, fmt.Errorf("failed to get member user/group ID: check if user/group exists or provide valid object ID instead of user principal name: %v", err)
 			}
-			members = append(members, fmt.Sprintf("https://graph.microsoft.com/v1.0/users/%s", userID))
+			members = append(members, memberRef)
 		}
 	}
 
@@ -73,16 +73,11 @@ func (c *GraphClient) GetEntraGroupByID(ctx context.Context, groupID string) err
 		return fmt.Errorf("group id is empty")
 	}
 
-	groups, err := c.sdk.Groups().ByGroupId(groupID).Get(ctx, nil)
+	_, err := c.getGroups(ctx, groupID)
 	if err != nil {
-		return fmt.Errorf("failed to get group by ID: %v", err)
+		return err
 	}
 
-	if groups.GetId() == nil {
-		return fmt.Errorf("group with ID %s not found", groupID)
-	}
-
-	logger.Info("successfully fetched group", "groupID", *groups.GetId())
 	return nil
 }
 
@@ -109,4 +104,17 @@ func (c *GraphClient) ensureClient() error {
 		return fmt.Errorf("Graph client is not initialized")
 	}
 	return nil
+}
+
+func (c *GraphClient) resolveMemberReference(ctx context.Context, memberID string) (string, error) {
+
+	if userID, err := c.getUsers(ctx, memberID); err == nil {
+		return fmt.Sprintf("https://graph.microsoft.com/v1.0/users/%s", userID), nil
+	}
+
+	if groupID, err := c.getGroups(ctx, memberID); err == nil {
+		return fmt.Sprintf("https://graph.microsoft.com/v1.0/groups/%s", groupID), nil
+	}
+
+	return "", fmt.Errorf("could not resolve member '%s' as user or group", memberID)
 }
