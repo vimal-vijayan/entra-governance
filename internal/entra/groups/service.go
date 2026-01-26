@@ -53,10 +53,10 @@ func (s *Service) Create(ctx context.Context, groupSpec v1alpha1.EntraSecurityGr
 	return "", "", fmt.Errorf("no valid credential reference found in the EntraSecurityGroup spec")
 }
 
-func (s *Service) Get(ctx context.Context, entraGroup v1alpha1.EntraSecurityGroup, groupID string) error {
+func (s *Service) Get(ctx context.Context, entraGroup v1alpha1.EntraSecurityGroup, groupID string) (string, error) {
 
 	if entraGroup.Spec.ForProvider == nil {
-		return fmt.Errorf("forProvider spec is nil")
+		return "", fmt.Errorf("forProvider spec is nil")
 	}
 
 	secretRef := client.SecretRef{
@@ -66,11 +66,16 @@ func (s *Service) Get(ctx context.Context, entraGroup v1alpha1.EntraSecurityGrou
 
 	sdk, err := s.factory.ForClientSecret(ctx, secretRef)
 	if err != nil {
-		return fmt.Errorf("failed to create SDK client: %v", err)
+		return "", fmt.Errorf("failed to create SDK client: %v", err)
 	}
 
 	graphClient := client.NewGraphClient(sdk)
-	return graphClient.GetEntraGroupByID(ctx, groupID)
+	statusCode, err := graphClient.GetEntraGroupByID(ctx, groupID)
+	if err != nil {
+		return statusCode, err
+	}
+	// You might want to do something with the status here
+	return statusCode, nil
 }
 
 func (s *Service) Delete(ctx context.Context, entraGroup v1alpha1.EntraSecurityGroup, groupID string) error {

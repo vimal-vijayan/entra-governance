@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/microsoftgraph/msgraph-sdk-go/models"
+	"github.com/microsoftgraph/msgraph-sdk-go/models/odataerrors"
 	v1alpha1 "github.com/vimal-vijayan/entra-governance/api/v1alpha1"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
@@ -65,20 +66,25 @@ func (c *GraphClient) CreateEntraGroup(ctx context.Context, entraGroup v1alpha1.
 	}, nil
 }
 
-func (c *GraphClient) GetEntraGroupByID(ctx context.Context, groupID string) error {
+func (c *GraphClient) GetEntraGroupByID(ctx context.Context, groupID string) (string, error) {
 	logger := log.FromContext(ctx)
+	odataErr := &odataerrors.ODataError{}
 
 	if groupID == "" {
 		logger.Error(fmt.Errorf("groupID cannot be empty"), "invalid groupID")
-		return fmt.Errorf("group id is empty")
+		return "", fmt.Errorf("group id is empty")
 	}
 
 	_, err := c.getGroups(ctx, groupID)
 	if err != nil {
-		return err
+		if odataErr, ok := err.(*odataerrors.ODataError); ok {
+			logger.Error(err, "failed to get group", "groupID", groupID, "statusCode", odataErr.GetStatusCode())
+		}
+		logger.Error(err, "failed to get group", "groupID", groupID)
+		return "", fmt.Errorf("failed to get group %w", err)
 	}
 
-	return nil
+	return fmt.Sprintf("%d", odataErr.GetStatusCode()), nil
 }
 
 func (c *GraphClient) DeleteEntraGroupByID(ctx context.Context, groupID string) error {
@@ -107,6 +113,7 @@ func (c *GraphClient) ensureClient() error {
 }
 
 func (c *GraphClient) resolveMemberReference(ctx context.Context, memberID string) (string, error) {
+	var err error
 
 	if userID, err := c.getUsers(ctx, memberID); err == nil {
 		return fmt.Sprintf("https://graph.microsoft.com/v1.0/users/%s", userID), nil
@@ -116,5 +123,5 @@ func (c *GraphClient) resolveMemberReference(ctx context.Context, memberID strin
 		return fmt.Sprintf("https://graph.microsoft.com/v1.0/groups/%s", groupID), nil
 	}
 
-	return "", fmt.Errorf("could not resolve member '%s' as user or group", memberID)
+	return "", fmt.Errorf("member with ID %s not found as user or group, error is %v", memberID, err)
 }

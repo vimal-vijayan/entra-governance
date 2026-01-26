@@ -61,7 +61,7 @@ func (r *EntraSecurityGroupReconciler) Reconcile(ctx context.Context, req ctrl.R
 	// Reconciliation logic goes here
 	if entraGroup.Status.ID != "" {
 		// Group already exists in status, checking if group exists in Entra
-		err := r.GroupService.Get(ctx, *entraGroup, entraGroup.Status.ID)
+		_, err := r.GroupService.Get(ctx, *entraGroup, entraGroup.Status.ID)
 		if err != nil {
 			logger.Error(err, "failed to get Entra Security Group by ID from status", "GroupID", entraGroup.Status.ID)
 			entraGroup.Status.ID = ""
@@ -131,21 +131,22 @@ func (r *EntraSecurityGroupReconciler) ensureFinalizer(ctx context.Context, entr
 func (r *EntraSecurityGroupReconciler) deleteResource(ctx context.Context, entraGroup *entraGroup.EntraSecurityGroup) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
 
-	// err := r.GroupService.Get(ctx, *entraGroup, entraGroup.Status.ID)
-	// if err != nil {
-	// 	logger.Error(err, "failed to get entra security group in entra before deletion")
-	// 	if apierrors.IsNotFound(err) || apierrors.IsInvalid(err) {
-	// 		// Group not found in Entra, remove finalizer
-	// 		return r.removeFinalizer(ctx, entraGroup)
-	// 	}
-	// }
+	statusCode, err := r.GroupService.Get(ctx, *entraGroup, entraGroup.Status.ID)
+	if err != nil {
+		if statusCode == "404" {
+			logger.Info("Entra Security Group not found in Entra. Removing finalizer.")
+			return r.removeFinalizer(ctx, entraGroup)
+		}
+		logger.Error(err, "failed to get Entra Security Group in Entra during deletion")
+		return ctrl.Result{RequeueAfter: defaultRequeueDuration}, err
+	}
 
 	if entraGroup.Status.ID == "" {
 		logger.Info("entra security group id is empty in status. skipping deletion in Entra.")
 		return r.removeFinalizer(ctx, entraGroup)
 	}
 
-	err := r.GroupService.Delete(ctx, *entraGroup, entraGroup.Status.ID)
+	err = r.GroupService.Delete(ctx, *entraGroup, entraGroup.Status.ID)
 	if err != nil {
 		logger.Error(err, "failed to delete Entra Security Group in Entra")
 		return ctrl.Result{RequeueAfter: defaultRequeueDuration}, err
