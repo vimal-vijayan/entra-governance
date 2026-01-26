@@ -11,8 +11,6 @@ spec:
   mailEnabled: false
   securityEnabled: true
   mailNickname: marketing-collab
-  # groupTypes:
-  #   - Unified
   owners:
     - 93ae7387-40a8-4f68-93d0-bba960155bd8 # user
   members:
