@@ -14,7 +14,20 @@ spec:
     singular: entrasecuritygroup
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - additionalPrinterColumns:
+    - description: The current phase of the EntraSecurityGroup
+      jsonPath: .status.phase
+      name: Phase
+      type: string
+    - description: The age of the EntraSecurityGroup
+      jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    - description: The ID of the EntraSecurityGroup in Entra
+      jsonPath: .status.id
+      name: ID
+      type: string
+    name: v1alpha1
     schema:
       openAPIV3Schema:
         description: EntraSecurityGroup is the Schema for the entrasecuritygroups

@@ -68,6 +68,9 @@ type EntraSecurityGroupStatus struct {
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
+// +kubebuilder:printcolumn:name="Phase",type="string",JSONPath=".status.phase",description="The current phase of the EntraSecurityGroup"
+// +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp",description="The age of the EntraSecurityGroup"
+// +kubebuilder:printcolumn:name="ID",type="string",JSONPath=".status.id",description="The ID of the EntraSecurityGroup in Entra"
 
 // EntraSecurityGroup is the Schema for the entrasecuritygroups API
 type EntraSecurityGroup struct {

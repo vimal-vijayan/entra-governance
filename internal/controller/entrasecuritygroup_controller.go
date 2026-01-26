@@ -23,8 +23,9 @@ type EntraSecurityGroupReconciler struct {
 }
 
 const (
-	defaultRequeueDuration      = 10 * time.Minute
-	entraSecurityGroupFinalizer = "finalizer.entraSecurityGroup.iam.entra.governance.com"
+	defaultRequeueDuration           = 10 * time.Minute
+	faildStatusUpdateRequeueDuration = 10 * time.Second
+	entraSecurityGroupFinalizer      = "finalizer.entraSecurityGroup.iam.entra.governance.com"
 )
 
 // +kubebuilder:rbac:groups=iam.entra.governance.com,resources=entrasecuritygroups,verbs=get;list;watch;create;update;patch;delete
@@ -55,13 +56,7 @@ func (r *EntraSecurityGroupReconciler) Reconcile(ctx context.Context, req ctrl.R
 	if !entraGroup.DeletionTimestamp.IsZero() {
 		logger.Info("EntraSecurityGroup resource is being deleted. skipping reconciliation.")
 		// Handle deletion logic here if needed
-		err := r.GroupService.Delete(ctx, *entraGroup, entraGroup.Status.ID)
-		if err != nil {
-			logger.Error(err, "failed to delete Entra Security Group in Entra")
-			return ctrl.Result{RequeueAfter: defaultRequeueDuration}, err
-		}
-		// remove finalizer
-		return r.removeFinalizer(ctx, entraGroup)
+		return r.deleteResource(ctx, entraGroup)
 	}
 
 	// Reconciliation logic goes here
@@ -82,23 +77,7 @@ func (r *EntraSecurityGroupReconciler) Reconcile(ctx context.Context, req ctrl.R
 	}
 
 	// Create Entra Security Group
-	groupId, groupName, err := r.GroupService.Create(ctx, *entraGroup)
-	if err != nil {
-		logger.Error(err, "failed to create Entra Security Group")
-		return ctrl.Result{RequeueAfter: defaultRequeueDuration}, err
-	}
-
-	// Update status with the created group ID
-	entraGroup.Status.ID = groupId
-	entraGroup.Status.DisplayName = groupName
-	if err := r.Status().Update(ctx, entraGroup); err != nil {
-		logger.Error(err, "failed to update EntraSecurityGroup status with GroupID")
-		return ctrl.Result{RequeueAfter: defaultRequeueDuration}, err
-	}
-
-	logger.Info("Successfully created Entra Security Group", "GroupID", groupId, "DisplayName", groupName)
-
-	return ctrl.Result{RequeueAfter: defaultRequeueDuration}, nil
+	return r.createResource(ctx, entraGroup)
 }
 
 // setupWithManager sets up the controller with the Manager.
@@ -106,6 +85,33 @@ func (r *EntraSecurityGroupReconciler) SetupWithManager(mgr ctrl.Manager) error 
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&entraGroup.EntraSecurityGroup{}).
 		Complete(r)
+}
+
+// create security group in Entra and update status
+func (r *EntraSecurityGroupReconciler) createResource(ctx context.Context, entraGroup *entraGroup.EntraSecurityGroup) (ctrl.Result, error) {
+	logger := log.FromContext(ctx)
+	groupId, groupName, err := r.GroupService.Create(ctx, *entraGroup)
+	if err != nil {
+		logger.Error(err, "failed to create Entra Security Group")
+		entraGroup.Status.Phase = "Failed"
+		if err := r.Status().Update(ctx, entraGroup); err != nil {
+			logger.Error(err, "failed to update EntraSecurityGroup status after creation failure")
+		}
+		return ctrl.Result{RequeueAfter: faildStatusUpdateRequeueDuration}, err
+	}
+
+	// Update status with the created group ID
+	entraGroup.Status.ID = groupId
+	entraGroup.Status.DisplayName = groupName
+	entraGroup.Status.ObservedGeneration = entraGroup.Generation
+	entraGroup.Status.Phase = "Ready"
+	if err := r.Status().Update(ctx, entraGroup); err != nil {
+		logger.Error(err, "failed to update EntraSecurityGroup status with GroupID")
+		return ctrl.Result{RequeueAfter: faildStatusUpdateRequeueDuration}, err
+	}
+
+	logger.Info("Successfully created Entra Security Group", "GroupID", groupId, "DisplayName", groupName)
+	return ctrl.Result{RequeueAfter: defaultRequeueDuration}, nil
 }
 
 // ensure finalizer is present on the resource
@@ -120,6 +126,18 @@ func (r *EntraSecurityGroupReconciler) ensureFinalizer(ctx context.Context, entr
 		logger.Info("finalizer added to EntraSecurityGroup")
 	}
 	return nil
+}
+
+// Delete resource and remove finalizer
+func (r *EntraSecurityGroupReconciler) deleteResource(ctx context.Context, entraGroup *entraGroup.EntraSecurityGroup) (ctrl.Result, error) {
+	logger := log.FromContext(ctx)
+	err := r.GroupService.Delete(ctx, *entraGroup, entraGroup.Status.ID)
+	if err != nil {
+		logger.Error(err, "failed to delete Entra Security Group in Entra")
+		return ctrl.Result{RequeueAfter: defaultRequeueDuration}, err
+	}
+	// remove finalizer
+	return r.removeFinalizer(ctx, entraGroup)
 }
 
 // Remove finalizer
