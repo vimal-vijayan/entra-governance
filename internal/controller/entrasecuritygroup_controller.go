@@ -55,7 +55,6 @@ func (r *EntraSecurityGroupReconciler) Reconcile(ctx context.Context, req ctrl.R
 
 	if !entraGroup.DeletionTimestamp.IsZero() {
 		logger.Info("EntraSecurityGroup resource is being deleted. skipping reconciliation.")
-		// Handle deletion logic here if needed
 		return r.deleteResource(ctx, entraGroup)
 	}
 

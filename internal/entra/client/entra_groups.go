@@ -24,6 +24,35 @@ func (c *GraphClient) CreateEntraGroup(ctx context.Context, entraGroup v1alpha1.
 	group.SetSecurityEnabled(&entraGroup.SecurityEnabled)
 	group.SetGroupTypes(entraGroup.GroupTypes)
 
+	owners := []string{}
+	if entraGroup.Owners != nil {
+		for _, userObjId := range entraGroup.Owners {
+			userID, err := c.getUsers(ctx, userObjId)
+			if err != nil {
+				return nil, fmt.Errorf("failed to get owner user ID: check if user exists or provide valid user object ID instead of user principal name: %v", err)
+			}
+			owners = append(owners, fmt.Sprintf("https://graph.microsoft.com/v1.0/users/%s", userID))
+		}
+	}
+
+	members := []string{}
+	if entraGroup.Members != nil {
+		for _, userObjId := range entraGroup.Members {
+			userID, err := c.getUsers(ctx, userObjId)
+			if err != nil {
+				return nil, fmt.Errorf("failed to get member user ID: check if user exists or provide valid user object ID instead of user principal name: %v", err)
+			}
+			members = append(members, fmt.Sprintf("https://graph.microsoft.com/v1.0/users/%s", userID))
+		}
+	}
+
+	additionalData := map[string]any{
+		"owners@odata.bind":  owners,
+		"members@odata.bind": members,
+	}
+
+	group.SetAdditionalData(additionalData)
+
 	// Call the SDK to create the group
 	groups, err := c.sdk.Groups().Post(ctx, group, nil)
 	if err != nil {
