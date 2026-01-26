@@ -63,7 +63,15 @@ func (c *GraphClient) DeleteEntraGroupByID(ctx context.Context, groupID string) 
 		return err
 	}
 
-	// call the function to delete group by ID
+	if groupID == "" {
+		return fmt.Errorf("group id is empty")
+	}
+
+	err := c.sdk.Groups().ByGroupId(groupID).Delete(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("failed to delete group by ID: %v", err)
+	}
+
 	return nil
 }
 

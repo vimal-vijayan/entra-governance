@@ -23,7 +23,7 @@ type EntraSecurityGroupReconciler struct {
 }
 
 const (
-	defaultRequeueDuration      = 60 * time.Second
+	defaultRequeueDuration      = 10 * time.Minute
 	entraSecurityGroupFinalizer = "finalizer.entraSecurityGroup.iam.entra.governance.com"
 )
 
@@ -54,8 +54,14 @@ func (r *EntraSecurityGroupReconciler) Reconcile(ctx context.Context, req ctrl.R
 
 	if !entraGroup.DeletionTimestamp.IsZero() {
 		logger.Info("EntraSecurityGroup resource is being deleted. skipping reconciliation.")
-		//TODO: Handle deletion logic here if needed.. currenlty reconilation is skipped
-		return ctrl.Result{RequeueAfter: defaultRequeueDuration}, nil
+		// Handle deletion logic here if needed
+		err := r.GroupService.Delete(ctx, *entraGroup, entraGroup.Status.ID)
+		if err != nil {
+			logger.Error(err, "failed to delete Entra Security Group in Entra")
+			return ctrl.Result{RequeueAfter: defaultRequeueDuration}, err
+		}
+		// remove finalizer
+		return r.removeFinalizer(ctx, entraGroup)
 	}
 
 	// Reconciliation logic goes here
@@ -64,7 +70,12 @@ func (r *EntraSecurityGroupReconciler) Reconcile(ctx context.Context, req ctrl.R
 		err := r.GroupService.Get(ctx, *entraGroup, entraGroup.Status.ID)
 		if err != nil {
 			logger.Error(err, "failed to get Entra Security Group by ID from status", "GroupID", entraGroup.Status.ID)
-			return ctrl.Result{RequeueAfter: defaultRequeueDuration}, err
+			entraGroup.Status.ID = ""
+			entraGroup.Status.DisplayName = ""
+			if err := r.Status().Update(ctx, entraGroup); err != nil {
+				logger.Error(err, "failed to clear EntraSecurityGroup status after failed get")
+			}
+			return ctrl.Result{RequeueAfter: 60 * time.Second}, err
 		}
 		logger.Info("entra security group already has GroupID in status. Skipping creation.", "GroupID", entraGroup.Status.ID)
 		return ctrl.Result{RequeueAfter: defaultRequeueDuration}, nil
@@ -109,4 +120,16 @@ func (r *EntraSecurityGroupReconciler) ensureFinalizer(ctx context.Context, entr
 		logger.Info("finalizer added to EntraSecurityGroup")
 	}
 	return nil
+}
+
+// Remove finalizer
+func (r *EntraSecurityGroupReconciler) removeFinalizer(ctx context.Context, entraGroup *entraGroup.EntraSecurityGroup) (ctrl.Result, error) {
+	logger := log.FromContext(ctx)
+	controllerutil.RemoveFinalizer(entraGroup, entraSecurityGroupFinalizer)
+	if err := r.Update(ctx, entraGroup); err != nil {
+		logger.Error(err, "failed to remove finalizer from EntraSecurityGroup")
+		return ctrl.Result{RequeueAfter: 60 * time.Second}, err
+	}
+	logger.Info("finalizer removed from EntraSecurityGroup. deletion complete.")
+	return ctrl.Result{RequeueAfter: defaultRequeueDuration}, nil
 }

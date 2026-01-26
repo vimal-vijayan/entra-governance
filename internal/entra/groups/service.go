@@ -66,9 +66,29 @@ func (s *Service) Get(ctx context.Context, entraGroup v1alpha1.EntraSecurityGrou
 
 	sdk, err := s.factory.ForClientSecret(ctx, secretRef)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create SDK client: %v", err)
 	}
 
 	graphClient := client.NewGraphClient(sdk)
 	return graphClient.GetEntraGroupByID(ctx, groupID)
+}
+
+func (s *Service) Delete(ctx context.Context, entraGroup v1alpha1.EntraSecurityGroup, groupID string) error {
+
+	if entraGroup.Spec.ForProvider == nil {
+		return fmt.Errorf("forProvider spec is nil")
+	}
+
+	secretRef := client.SecretRef{
+		Name:      entraGroup.Spec.ForProvider.CredentialSecretRef,
+		Namespace: entraGroup.Namespace,
+	}
+
+	sdk, err := s.factory.ForClientSecret(ctx, secretRef)
+	if err != nil {
+		return fmt.Errorf("failed to create SDK client: %v", err)
+	}
+
+	graphClient := client.NewGraphClient(sdk)
+	return graphClient.DeleteEntraGroupByID(ctx, groupID)
 }
