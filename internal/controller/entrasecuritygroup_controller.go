@@ -59,30 +59,29 @@ func (r *EntraSecurityGroupReconciler) Reconcile(ctx context.Context, req ctrl.R
 	}
 
 	//TODO: Reconciliation logic goes here, later move to helper functions/services
-	if entraGroup.Status.ID != "" {
-		// Group already exists in status, checking if group exists in Entra
-		if err := r.CheckAndUpdateGroupExists(ctx, entraGroup); err != nil {
-			return ctrl.Result{RequeueAfter: defaultRequeueDuration}, err
-		}
-
-		// Group exists, check members and owners
-		if entraGroup.Status.ManagedMemberGroups != nil {
-			// check if members are in sync, if not create
-			if err := r.CheckAndUpdateMembers(ctx, *entraGroup); err != nil {
-				return ctrl.Result{RequeueAfter: defaultRequeueDuration}, err
-			}
-		}
-
-		if entraGroup.Status.Owners != nil {
-			// check if owners are in sync, if not create
-		}
-
-		// Group already exists and is synced, requeue after default duration
-		return ctrl.Result{RequeueAfter: defaultRequeueDuration}, nil
+	if entraGroup.Status.ID == "" {
+		// Group doesn't exist yet, create it
+		return r.createResource(ctx, entraGroup)
 	}
 
-	// Group doesn't exist yet, create it
-	return r.createResource(ctx, entraGroup)
+	// Group already exists in status, checking if group exists in Entra
+	if err := r.CheckAndUpdateGroupExists(ctx, entraGroup); err != nil {
+		return ctrl.Result{RequeueAfter: defaultRequeueDuration}, err
+	}
+
+	// Group exists, check members and owners
+	if entraGroup.Status.ManagedMemberGroups != nil {
+		// check if members are in sync, if not create
+		if err := r.CheckAndUpdateMembers(ctx, *entraGroup); err != nil {
+			return ctrl.Result{RequeueAfter: defaultRequeueDuration}, err
+		}
+	}
+
+	if entraGroup.Status.Owners != nil {
+		// check if owners are in sync, if not create
+	}
+
+	return ctrl.Result{RequeueAfter: defaultRequeueDuration}, nil
 }
 
 func (r *EntraSecurityGroupReconciler) CheckAndUpdateMembers(ctx context.Context, entraGroup entraGroup.EntraSecurityGroup) error {
