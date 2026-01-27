@@ -73,7 +73,19 @@ spec:
                 type: string
               members:
                 items:
-                  type: string
+                  properties:
+                    id:
+                      type: string
+                    type:
+                      enum:
+                      - User
+                      - Group
+                      - ServicePrincipal
+                      type: string
+                  required:
+                  - id
+                  - type
+                  type: object
                 type: array
               name:
                 maxLength: 256
@@ -82,7 +94,19 @@ spec:
                 type: string
               owners:
                 items:
-                  type: string
+                  properties:
+                    id:
+                      type: string
+                    type:
+                      enum:
+                      - User
+                      - Group
+                      - ServicePrincipal
+                      type: string
+                  required:
+                  - id
+                  - type
+                  type: object
                 type: array
               securityEnabled:
                 default: true
@@ -157,11 +181,41 @@ spec:
                 description: ID is the unique identifier of the EntraSecurityGroup
                   in the external system.
                 type: string
+              memberGroups:
+                description: groups as members of the EntraSecurityGroup.
+                items:
+                  type: string
+                type: array
+              memberServicePrincipals:
+                description: SPA as members of the EntraSecurityGroup.
+                items:
+                  type: string
+                type: array
+              memberUsers:
+                description: Users as members of the EntraSecurityGroup.
+                items:
+                  type: string
+                type: array
               observedGeneration:
                 description: ObservedGeneration is the latest observed generation
                   of the resource.
                 format: int64
                 type: integer
+              ownerGroups:
+                description: groups as Owners of the EntraSecurityGroup.
+                items:
+                  type: string
+                type: array
+              ownerServicePrincipals:
+                description: SPA as Owners of the EntraSecurityGroup.
+                items:
+                  type: string
+                type: array
+              owners:
+                description: Users as Owners of the EntraSecurityGroup.
+                items:
+                  type: string
+                type: array
               phase:
                 description: Phase represents the current phase of the EntraSecurityGroup.
                 type: string

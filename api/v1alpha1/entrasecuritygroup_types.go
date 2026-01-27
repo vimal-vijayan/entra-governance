@@ -42,9 +42,25 @@ type EntraSecurityGroupSpec struct {
 	// +kubebuilder:default=true
 	SecurityEnabled bool `json:"securityEnabled,omitempty"`
 	// +kubebuilder:validation:Optional
-	Owners []string `json:"owners,omitempty"`
+	Owners *[]Owners `json:"owners,omitempty"`
 	// +kubebuilder:validation:Optional
-	Members []string `json:"members,omitempty"`
+	Members *[]Members `json:"members,omitempty"`
+}
+
+type Members struct {
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:Enum=User;Group;ServicePrincipal
+	Type string `json:"type,omitempty"`
+	// +kubebuilder:validation:Required
+	Id string `json:"id,omitempty"`
+}
+
+type Owners struct {
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:Enum=User;Group;ServicePrincipal
+	Type string `json:"type,omitempty"`
+	// +kubebuilder:validation:Required
+	Id string `json:"id,omitempty"`
 }
 
 type ProviderSpec struct {
@@ -64,6 +80,18 @@ type EntraSecurityGroupStatus struct {
 	ID string `json:"id,omitempty"`
 	// DisplayName is the display name of the EntraSecurityGroup.
 	DisplayName string `json:"displayName,omitempty"`
+	// Users as members of the EntraSecurityGroup.
+	MemberUsers []string `json:"memberUsers,omitempty"`
+	// groups as members of the EntraSecurityGroup.
+	MemberGroups []string `json:"memberGroups,omitempty"`
+	// SPA as members of the EntraSecurityGroup.
+	MemberServicePrincipals []string `json:"memberServicePrincipals,omitempty"`
+	//Users as Owners of the EntraSecurityGroup.
+	Owners []string `json:"owners,omitempty"`
+	// groups as Owners of the EntraSecurityGroup.
+	OwnerGroups []string `json:"ownerGroups,omitempty"`
+	// SPA as Owners of the EntraSecurityGroup.
+	OwnerServicePrincipals []string `json:"ownerServicePrincipals,omitempty"`
 }
 
 // +kubebuilder:object:root=true

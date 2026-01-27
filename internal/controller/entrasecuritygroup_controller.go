@@ -72,6 +72,13 @@ func (r *EntraSecurityGroupReconciler) Reconcile(ctx context.Context, req ctrl.R
 			return ctrl.Result{RequeueAfter: 60 * time.Second}, err
 		}
 		logger.Info("entra security group already has GroupID in status. Skipping creation.", "GroupID", entraGroup.Status.ID)
+		// Create members and owners if any
+		err = r.GroupService.AddMembers(ctx, *entraGroup)
+		if err != nil {
+			logger.Error(err, "failed to add members to Entra Security Group", "GroupID", entraGroup.Status.ID)
+			return ctrl.Result{RequeueAfter: defaultRequeueDuration}, err
+		}
+
 		return ctrl.Result{RequeueAfter: defaultRequeueDuration}, nil
 	}
 
@@ -103,14 +110,14 @@ func (r *EntraSecurityGroupReconciler) createResource(ctx context.Context, entra
 	entraGroup.Status.ID = groupId
 	entraGroup.Status.DisplayName = groupName
 	entraGroup.Status.ObservedGeneration = entraGroup.Generation
-	entraGroup.Status.Phase = "Ready"
+	entraGroup.Status.Phase = "Pending"
 	if err := r.Status().Update(ctx, entraGroup); err != nil {
 		logger.Error(err, "failed to update EntraSecurityGroup status with GroupID")
-		return ctrl.Result{RequeueAfter: faildStatusUpdateRequeueDuration}, err
+		return ctrl.Result{Requeue: true}, err
 	}
 
 	logger.Info("Successfully created Entra Security Group", "GroupID", groupId, "DisplayName", groupName)
-	return ctrl.Result{RequeueAfter: defaultRequeueDuration}, nil
+	return ctrl.Result{Requeue: true}, nil
 }
 
 // ensure finalizer is present on the resource

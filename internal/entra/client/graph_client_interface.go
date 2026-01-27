@@ -11,7 +11,7 @@ type EntraGroupClient interface {
 	CreateEntraGroup(ctx context.Context, entraGroup v1alpha1.EntraSecurityGroupSpec) (*GroupCreateResponse, error)
 	GetEntraGroupByID(ctx context.Context, groupID string) (string, error)
 	DeleteEntraGroupByID(ctx context.Context, groupID string) error
-	// AddMemberToGroup(groupID, userID string) error
+	AddMembersToGroup(ctx context.Context, groupID string, resourceType string, memberRefs []string) error
 	// RemoveMemberFromGroup(groupID, userID string) error
 }
 

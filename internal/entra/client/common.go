@@ -39,3 +39,18 @@ func (c *GraphClient) getGroups(ctx context.Context, group string) (string, erro
 	logger.Info("successfully fetched group", "groupID", *resp.GetId())
 	return *resp.GetId(), nil
 }
+
+func (c *GraphClient) listMembersOfGroup(ctx context.Context, groupID string) ([]string, error) {
+	resp, err := c.sdk.Groups().ByGroupId(groupID).Members().Get(ctx, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list members of group: %v", err)
+	}
+
+	var memberIDs []string
+	for _, member := range resp.GetValue() {
+		if member.GetId() != nil {
+			memberIDs = append(memberIDs, *member.GetId())
+		}
+	}
+	return memberIDs, nil
+}

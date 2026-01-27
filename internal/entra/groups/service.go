@@ -97,3 +97,55 @@ func (s *Service) Delete(ctx context.Context, entraGroup v1alpha1.EntraSecurityG
 	graphClient := client.NewGraphClient(sdk)
 	return graphClient.DeleteEntraGroupByID(ctx, groupID)
 }
+
+func (s *Service) AddMembers(ctx context.Context, entraGroup v1alpha1.EntraSecurityGroup) error {
+
+	if entraGroup.Spec.Members == nil || len(*entraGroup.Spec.Members) == 0 {
+		return nil
+	}
+
+	// get users as members from the spec
+	var userIDs = getMemberIDs(entraGroup, "User")
+	// Fetch group ID using group name
+	var groupIDs = getMemberIDs(entraGroup, "Group")
+	// Fetch service principal IDs using spec
+	var servicePrincipalIDs = getMemberIDs(entraGroup, "ServicePrincipal")
+
+	sdk, err := s.factory.ForClientSecret(ctx, client.SecretRef{
+		Name:      entraGroup.Spec.ForProvider.CredentialSecretRef,
+		Namespace: entraGroup.Namespace,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to create SDK client: %v", err)
+	}
+
+	graphClient := client.NewGraphClient(sdk)
+
+	// call the api to add members
+	if userIDs != nil {
+		err := graphClient.AddMembersToGroup(ctx, entraGroup.Status.ID, "users", userIDs)
+		if err != nil {
+			return fmt.Errorf("failed to add users as members to group: %v", err)
+		}
+	}
+
+	if groupIDs != nil {
+		// add groups as members
+	}
+
+	if servicePrincipalIDs != nil {
+		// add service principals as members
+	}
+
+	return nil
+}
+
+func getMemberIDs(entraGroup v1alpha1.EntraSecurityGroup, Type string) []string {
+	var ids []string
+	for _, member := range *entraGroup.Spec.Members {
+		if member.Type == Type {
+			ids = append(ids, member.Id)
+		}
+	}
+	return ids
+}

@@ -6,15 +6,26 @@ metadata:
     app.kubernetes.io/managed-by: kustomize
   name: marketing-collab
 spec:
+  forProvider:
+    credentialSecretRef: entra-graph-credentials # Kubernetes secret name
   name: marketing-collab
   description: "Collaboration group for the marketing team"
   mailEnabled: false
   securityEnabled: true
   mailNickname: marketing-collab
-  owners:
-    - 93ae7387-40a8-4f68-93d0-bba960155bd8 # user
+  # owners:
+  #   - type: User
+  #     id: 93ae7387-40a8-4f68-93d0-bba960155bd8 # user
+  #   - type: ServicePrincipal
+  #     id: d3b5f5e1-6c4b-4f2e-9f3a-2e5f4c3b2a1d # app registration
+  #   - type: Group
+  #     id: 7c9e6679-7425-40de-944b-e07fc1f90ae7 # another group
   members:
-    - 93ae7387-40a8-4f68-93d0-bba960155bd8 # user
-    - 51d399fb-e209-4240-afc1-08baa1e13023 # aks-cluster-admin
-  forProvider:
-    credentialSecretRef: entra-graph-credentials   # Kubernetes secret name
+    - type: User
+      id: 93ae7387-40a8-4f68-93d0-bba960155bd8 # user
+    - type: User
+      id: 6ab28387-2323-4e1b-8d8a-e1c0a579c985 # John Vick
+    # - type: ServicePrincipal
+    #   id: d3b5f5e1-6c4b-4f2e-9f3a-2e5f4c3b2a1d # app registration
+    # - type: Group
+    #   id: 7c9e6679-7425-40de-944b-e07fc1f90ae7 # another group
