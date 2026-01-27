@@ -253,18 +253,18 @@ func (in *EntraSecurityGroupStatus) DeepCopyInto(out *EntraSecurityGroupStatus) 
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
 	}
-	if in.MemberUsers != nil {
-		in, out := &in.MemberUsers, &out.MemberUsers
+	if in.ManagedMemberUsers != nil {
+		in, out := &in.ManagedMemberUsers, &out.ManagedMemberUsers
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
-	if in.MemberGroups != nil {
-		in, out := &in.MemberGroups, &out.MemberGroups
+	if in.ManagedMemberGroups != nil {
+		in, out := &in.ManagedMemberGroups, &out.ManagedMemberGroups
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
-	if in.MemberServicePrincipals != nil {
-		in, out := &in.MemberServicePrincipals, &out.MemberServicePrincipals
+	if in.ManagedMemberServicePrincipals != nil {
+		in, out := &in.ManagedMemberServicePrincipals, &out.ManagedMemberServicePrincipals
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}

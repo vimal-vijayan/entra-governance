@@ -56,7 +56,7 @@ func (s *Service) Create(ctx context.Context, groupSpec v1alpha1.EntraSecurityGr
 func (s *Service) Get(ctx context.Context, entraGroup v1alpha1.EntraSecurityGroup, groupID string) (string, error) {
 
 	if entraGroup.Spec.ForProvider == nil {
-		return "", fmt.Errorf("forProvider spec is nil")
+		return "", fmt.Errorf("credential reference in forProvider spec is nil")
 	}
 
 	secretRef := client.SecretRef{
@@ -66,7 +66,7 @@ func (s *Service) Get(ctx context.Context, entraGroup v1alpha1.EntraSecurityGrou
 
 	sdk, err := s.factory.ForClientSecret(ctx, secretRef)
 	if err != nil {
-		return "", fmt.Errorf("failed to create SDK client: %v", err)
+		return "", err
 	}
 
 	graphClient := client.NewGraphClient(sdk)
@@ -74,7 +74,7 @@ func (s *Service) Get(ctx context.Context, entraGroup v1alpha1.EntraSecurityGrou
 	if err != nil {
 		return statusCode, err
 	}
-	// You might want to do something with the status here
+
 	return statusCode, nil
 }
 
@@ -138,6 +138,32 @@ func (s *Service) AddMembers(ctx context.Context, entraGroup v1alpha1.EntraSecur
 	}
 
 	return nil
+}
+
+func (s *Service) CheckMemberIds(ctx context.Context, entraGroup v1alpha1.EntraSecurityGroup) ([]string, error) {
+
+	currentManagedMemberIds := entraGroup.Status.ManagedMemberGroups
+
+	sdk, err := s.factory.ForClientSecret(ctx, client.SecretRef{
+		Name:      entraGroup.Spec.ForProvider.CredentialSecretRef,
+		Namespace: entraGroup.Namespace,
+	})
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to create SDK client: %v", err)
+	}
+
+	graphClient := client.NewGraphClient(sdk)
+
+	unManagedMemberIds := []string{}
+	for _, member := range currentManagedMemberIds {
+		err := graphClient.CheckGroupMembers(ctx, entraGroup.Status.ID, member)
+		if err != nil {
+			unManagedMemberIds = append(unManagedMemberIds, member)
+		}
+	}
+
+	return unManagedMemberIds, nil
 }
 
 func getMemberIDs(entraGroup v1alpha1.EntraSecurityGroup, Type string) []string {

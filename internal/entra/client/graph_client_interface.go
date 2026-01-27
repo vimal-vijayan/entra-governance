@@ -12,7 +12,7 @@ type EntraGroupClient interface {
 	GetEntraGroupByID(ctx context.Context, groupID string) (string, error)
 	DeleteEntraGroupByID(ctx context.Context, groupID string) error
 	AddMembersToGroup(ctx context.Context, groupID string, resourceType string, memberRefs []string) error
-	// RemoveMemberFromGroup(groupID, userID string) error
+	CheckGroupMembers(ctx context.Context, groupID string, memberId string) error
 }
 
 type GraphClient struct {

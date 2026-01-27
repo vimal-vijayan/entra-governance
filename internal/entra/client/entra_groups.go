@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"strings"
 
+	graphdirectoryobjects "github.com/microsoftgraph/msgraph-sdk-go/directoryobjects"
 	"github.com/microsoftgraph/msgraph-sdk-go/models"
 	"github.com/microsoftgraph/msgraph-sdk-go/models/odataerrors"
 	v1alpha1 "github.com/vimal-vijayan/entra-governance/api/v1alpha1"
+
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
@@ -25,36 +27,6 @@ func (c *GraphClient) CreateEntraGroup(ctx context.Context, entraGroup v1alpha1.
 	group.SetMailNickname(&entraGroup.MailNickname)
 	group.SetSecurityEnabled(&entraGroup.SecurityEnabled)
 	group.SetGroupTypes(entraGroup.GroupTypes)
-
-	// owners := []string{}
-	// if entraGroup.Owners != nil {
-	// 	for _, userObjId := range entraGroup.Owners {
-	// 		userID, err := c.getUsers(ctx, userObjId)
-	// 		if err != nil {
-	// 			return nil, fmt.Errorf("failed to get owner user ID: check if user exists or provide valid user object ID instead of user principal name: %v", err)
-	// 		}
-	// 		owners = append(owners, fmt.Sprintf("https://graph.microsoft.com/v1.0/users/%s", userID))
-	// 	}
-	// }
-
-	// members := []string{}
-	// if entraGroup.Members != nil {
-	// 	for _, memberID := range entraGroup.Members {
-	// 		memberRef, err := c.resolveMemberReference(ctx, memberID)
-	// 		if err != nil {
-	// 			return nil, fmt.Errorf("failed to get member user/group ID: check if user/group exists or provide valid object ID instead of user principal name: %v", err)
-	// 		}
-	// 		members = append(members, memberRef)
-	// 	}
-	// }
-
-	// additionalData := map[string]any{
-	// 	"owners@odata.bind":  owners,
-	// 	"members@odata.bind": members,
-	// }
-
-	// group.SetAdditionalData(additionalData)
-
 	// Call the SDK to create the group
 	groups, err := c.sdk.Groups().Post(ctx, group, nil)
 	if err != nil {
@@ -69,7 +41,7 @@ func (c *GraphClient) CreateEntraGroup(ctx context.Context, entraGroup v1alpha1.
 
 func (c *GraphClient) GetEntraGroupByID(ctx context.Context, groupID string) (string, error) {
 	logger := log.FromContext(ctx)
-	statusCode := ""
+	var statusCode string
 
 	if groupID == "" {
 		logger.Error(fmt.Errorf("groupID cannot be empty"), "invalid groupID")
@@ -114,6 +86,21 @@ func (c *GraphClient) ensureClient() error {
 	return nil
 }
 
+// api doc: https://learn.microsoft.com/en-us/graph/api/directoryobject-checkmembergroups?view=graph-rest-1.0&tabs=go
+func (c *GraphClient) CheckGroupMembers(ctx context.Context, groupID string, memberId string) error {
+	logger := log.FromContext(ctx)
+	requestBody := graphdirectoryobjects.NewItemCheckMemberGroupsPostRequestBody()
+	requestBody.SetGroupIds([]string{groupID})
+	_, err := c.sdk.DirectoryObjects().ByDirectoryObjectId(memberId).CheckMemberGroups().PostAsCheckMemberGroupsPostResponse(ctx, requestBody, nil)
+
+	if err != nil {
+		logger.Info("member is not part of the group", "memberId", memberId, "groupID", groupID)
+		return err
+	}
+
+	return nil
+}
+
 func (c *GraphClient) resolveMemberReference(ctx context.Context, memberID string) (string, error) {
 	if memberID == "" {
 		return "", fmt.Errorf("member id is empty")
@@ -134,10 +121,6 @@ func (c *GraphClient) resolveMemberReference(ctx context.Context, memberID strin
 	}
 
 	return "", fmt.Errorf("member with ID %s not found as user or group: user error: %v; group error: %v", memberID, userErr, groupErr)
-}
-
-func (c *GraphClient) UpdateEntraGroup(ctx context.Context, groupID string, entraGroup v1alpha1.EntraSecurityGroupSpec) error {
-	return nil
 }
 
 func (c *GraphClient) AddOwnersToGroup(ctx context.Context, groupID string) ([]string, error) {

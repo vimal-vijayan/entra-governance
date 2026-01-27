@@ -58,32 +58,68 @@ func (r *EntraSecurityGroupReconciler) Reconcile(ctx context.Context, req ctrl.R
 		return r.deleteResource(ctx, entraGroup)
 	}
 
-	// Reconciliation logic goes here
+	//TODO: Reconciliation logic goes here, later move to helper functions/services
 	if entraGroup.Status.ID != "" {
 		// Group already exists in status, checking if group exists in Entra
-		_, err := r.GroupService.Get(ctx, *entraGroup, entraGroup.Status.ID)
-		if err != nil {
-			logger.Error(err, "failed to get Entra Security Group by ID from status", "GroupID", entraGroup.Status.ID)
-			entraGroup.Status.ID = ""
-			entraGroup.Status.DisplayName = ""
-			if err := r.Status().Update(ctx, entraGroup); err != nil {
-				logger.Error(err, "failed to clear EntraSecurityGroup status after failed get")
-			}
-			return ctrl.Result{RequeueAfter: 60 * time.Second}, err
-		}
-		logger.Info("entra security group already has GroupID in status. Skipping creation.", "GroupID", entraGroup.Status.ID)
-		// Create members and owners if any
-		err = r.GroupService.AddMembers(ctx, *entraGroup)
-		if err != nil {
-			logger.Error(err, "failed to add members to Entra Security Group", "GroupID", entraGroup.Status.ID)
+		if err := r.CheckAndUpdateGroupExists(ctx, entraGroup); err != nil {
 			return ctrl.Result{RequeueAfter: defaultRequeueDuration}, err
 		}
 
+		// Group exists, check members and owners
+		if entraGroup.Status.ManagedMemberGroups != nil {
+			// check if members are in sync, if not create
+			if err := r.CheckAndUpdateMembers(ctx, *entraGroup); err != nil {
+				return ctrl.Result{RequeueAfter: defaultRequeueDuration}, err
+			}
+		}
+
+		if entraGroup.Status.Owners != nil {
+			// check if owners are in sync, if not create
+		}
+
+		// Group already exists and is synced, requeue after default duration
 		return ctrl.Result{RequeueAfter: defaultRequeueDuration}, nil
 	}
 
-	// Create Entra Security Group
+	// Group doesn't exist yet, create it
 	return r.createResource(ctx, entraGroup)
+}
+
+func (r *EntraSecurityGroupReconciler) CheckAndUpdateMembers(ctx context.Context, entraGroup entraGroup.EntraSecurityGroup) error {
+	// check if members are in sync with the spec
+	logger := log.FromContext(ctx)
+
+	unManagedMemberIds, err := r.GroupService.CheckMemberIds(ctx, entraGroup)
+	if err != nil {
+		logger.Error(err, "failed to check member IDs for Entra Security Group", "GroupID", entraGroup.Status.ID)
+		return err
+	}
+
+	if len(unManagedMemberIds) > 0 {
+		// add missing members
+		// missing members need to be added from the spec
+		logger.Info("groups members are not in sync. adding missing members.", "missingMemberIDs", unManagedMemberIds)
+	}
+
+	return nil
+}
+
+func (r *EntraSecurityGroupReconciler) CheckAndUpdateGroupExists(ctx context.Context, entraGroup *entraGroup.EntraSecurityGroup) error {
+	logger := log.FromContext(ctx)
+
+	_, err := r.GroupService.Get(ctx, *entraGroup, entraGroup.Status.ID)
+	if err != nil {
+		logger.Error(err, "failed to get Entra Security Group by ID from status", "GroupID", entraGroup.Status.ID)
+		entraGroup.Status.ID = ""
+		entraGroup.Status.DisplayName = ""
+		entraGroup.Status.Phase = "Pending"
+		if err := r.Status().Update(ctx, entraGroup); err != nil {
+			logger.Error(err, "failed to clear EntraSecurityGroup status after failed get")
+		}
+		return err
+	}
+
+	return nil
 }
 
 // setupWithManager sets up the controller with the Manager.
@@ -110,7 +146,7 @@ func (r *EntraSecurityGroupReconciler) createResource(ctx context.Context, entra
 	entraGroup.Status.ID = groupId
 	entraGroup.Status.DisplayName = groupName
 	entraGroup.Status.ObservedGeneration = entraGroup.Generation
-	entraGroup.Status.Phase = "Pending"
+	entraGroup.Status.Phase = "Success"
 	if err := r.Status().Update(ctx, entraGroup); err != nil {
 		logger.Error(err, "failed to update EntraSecurityGroup status with GroupID")
 		return ctrl.Result{Requeue: true}, err

@@ -181,17 +181,17 @@ spec:
                 description: ID is the unique identifier of the EntraSecurityGroup
                   in the external system.
                 type: string
-              memberGroups:
+              managedMemberGroups:
                 description: groups as members of the EntraSecurityGroup.
                 items:
                   type: string
                 type: array
-              memberServicePrincipals:
+              managedMemberServicePrincipals:
                 description: SPA as members of the EntraSecurityGroup.
                 items:
                   type: string
                 type: array
-              memberUsers:
+              managedMemberUsers:
                 description: Users as members of the EntraSecurityGroup.
                 items:
                   type: string

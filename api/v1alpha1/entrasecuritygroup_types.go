@@ -81,11 +81,11 @@ type EntraSecurityGroupStatus struct {
 	// DisplayName is the display name of the EntraSecurityGroup.
 	DisplayName string `json:"displayName,omitempty"`
 	// Users as members of the EntraSecurityGroup.
-	MemberUsers []string `json:"memberUsers,omitempty"`
+	ManagedMemberUsers []string `json:"managedMemberUsers,omitempty"`
 	// groups as members of the EntraSecurityGroup.
-	MemberGroups []string `json:"memberGroups,omitempty"`
+	ManagedMemberGroups []string `json:"managedMemberGroups,omitempty"`
 	// SPA as members of the EntraSecurityGroup.
-	MemberServicePrincipals []string `json:"memberServicePrincipals,omitempty"`
+	ManagedMemberServicePrincipals []string `json:"managedMemberServicePrincipals,omitempty"`
 	//Users as Owners of the EntraSecurityGroup.
 	Owners []string `json:"owners,omitempty"`
 	// groups as Owners of the EntraSecurityGroup.
