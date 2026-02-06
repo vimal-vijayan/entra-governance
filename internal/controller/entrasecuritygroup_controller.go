@@ -12,7 +12,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	entraGroup "github.com/vimal-vijayan/entra-governance/api/v1alpha1"
-	"github.com/vimal-vijayan/entra-governance/internal/entra/groups"
+	groups "github.com/vimal-vijayan/entra-governance/internal/services/group"
 )
 
 // EntraSecurityGroupReconciler reconciles a EntraSecurityGroup object

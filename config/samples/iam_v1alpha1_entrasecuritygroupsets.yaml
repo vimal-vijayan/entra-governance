@@ -1,0 +1,22 @@
+apiVersion: iam.entra.governance.com/v1alpha1
+kind: EntraSecurityGroupSet
+metadata:
+  labels:
+    app.kubernetes.io/name: entra-governance
+    app.kubernetes.io/managed-by: kustomize
+  name: marketing-collab
+spec:
+  forProvider:
+    credentialSecretRef: entra-graph-credentials # Kubernetes secret name
+  groups:
+    - name: marketing-collab
+      description: "Collaboration group for the marketing team"
+      members:
+        - type: Group
+          id: 7c9e6679-7425-40de-944b-e07fc1f90ae7 # all-employees group
+        - type: ServicePrincipal
+          id: 93ae7387-40a8-4f68-93d0-bba960155bd8 
+    - name: sales-collab
+      description: "Collaboration group for the sales team"
+    - name: hr-collab
+      description: "Collaboration group for the HR team"

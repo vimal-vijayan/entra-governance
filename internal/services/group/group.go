@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/vimal-vijayan/entra-governance/api/v1alpha1"
-	"github.com/vimal-vijayan/entra-governance/internal/entra/client"
+	"github.com/vimal-vijayan/entra-governance/internal/client"
 )
 
 type Service struct {

@@ -36,9 +36,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
 	iamv1alpha1 "github.com/vimal-vijayan/entra-governance/api/v1alpha1"
+	"github.com/vimal-vijayan/entra-governance/internal/client"
 	"github.com/vimal-vijayan/entra-governance/internal/controller"
-	"github.com/vimal-vijayan/entra-governance/internal/entra/client"
-	"github.com/vimal-vijayan/entra-governance/internal/entra/groups"
+	groups "github.com/vimal-vijayan/entra-governance/internal/services/group"
 	// +kubebuilder:scaffold:imports
 )
 
