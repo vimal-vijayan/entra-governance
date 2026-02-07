@@ -1,4 +1,4 @@
-package client
+package graph
 
 import (
 	"context"
@@ -12,11 +12,6 @@ import (
 
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
-
-type GroupCreateResponse struct {
-	DisplayName string `json:"displayName"`
-	ID          string `json:"id"`
-}
 
 func (c *GraphClient) CreateEntraGroup(ctx context.Context, entraGroup v1alpha1.EntraSecurityGroupSpec) (*GroupCreateResponse, error) {
 
@@ -39,26 +34,26 @@ func (c *GraphClient) CreateEntraGroup(ctx context.Context, entraGroup v1alpha1.
 	}, nil
 }
 
-func (c *GraphClient) GetEntraGroupByID(ctx context.Context, groupID string) (string, error) {
+func (c *GraphClient) GetEntraGroupByID(ctx context.Context, groupID string) (string, string, error) {
 	logger := log.FromContext(ctx)
-	var statusCode string
+	var HttpStatusCode string
 
 	if groupID == "" {
 		logger.Error(fmt.Errorf("groupID cannot be empty"), "invalid groupID")
-		return "", fmt.Errorf("group id is empty")
+		return "", "", fmt.Errorf("group id is empty")
 	}
 
-	_, err := c.getGroups(ctx, groupID)
+	id, err := c.getGroups(ctx, groupID)
 	if err != nil {
 		if odataErr, ok := err.(*odataerrors.ODataError); ok {
-			statusCode = fmt.Sprintf("%d", odataErr.GetStatusCode())
+			HttpStatusCode = fmt.Sprintf("%d", odataErr.GetStatusCode())
 			logger.Error(err, "failed to get group", "groupID", groupID, "statusCode", odataErr.GetStatusCode())
 		}
 		logger.Error(err, "failed to get group", "groupID", groupID)
-		return statusCode, fmt.Errorf("failed to get group %w", err)
+		return "", HttpStatusCode, err
 	}
 
-	return statusCode, nil
+	return id, HttpStatusCode, nil
 }
 
 func (c *GraphClient) DeleteEntraGroupByID(ctx context.Context, groupID string) error {
@@ -76,13 +71,6 @@ func (c *GraphClient) DeleteEntraGroupByID(ctx context.Context, groupID string) 
 		return fmt.Errorf("failed to delete group by ID: %v", err)
 	}
 
-	return nil
-}
-
-func (c *GraphClient) ensureClient() error {
-	if c == nil || c.sdk == nil {
-		return fmt.Errorf("Graph client is not initialized")
-	}
 	return nil
 }
 

@@ -38,7 +38,7 @@ import (
 	iamv1alpha1 "github.com/vimal-vijayan/entra-governance/api/v1alpha1"
 	"github.com/vimal-vijayan/entra-governance/internal/client"
 	"github.com/vimal-vijayan/entra-governance/internal/controller"
-	groups "github.com/vimal-vijayan/entra-governance/internal/services/group"
+	groups "github.com/vimal-vijayan/entra-governance/internal/services/groups"
 	// +kubebuilder:scaffold:imports
 )
 

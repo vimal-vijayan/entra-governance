@@ -6,6 +6,7 @@ import (
 
 	"github.com/vimal-vijayan/entra-governance/api/v1alpha1"
 	"github.com/vimal-vijayan/entra-governance/internal/client"
+	"github.com/vimal-vijayan/entra-governance/internal/graph"
 )
 
 type Service struct {
@@ -14,6 +15,32 @@ type Service struct {
 
 func NewService(factory *client.ClientFactory) *Service {
 	return &Service{factory: factory}
+}
+
+func (s *Service) Get(ctx context.Context, entraGroup v1alpha1.EntraSecurityGroup, groupID string) (string, string, error) {
+
+	if entraGroup.Spec.ForProvider == nil {
+		return "", "", fmt.Errorf("credential reference in forProvider spec is nil")
+	}
+
+	secretRef := client.SecretRef{
+		Name:      entraGroup.Spec.ForProvider.CredentialSecretRef,
+		Namespace: entraGroup.Namespace,
+	}
+
+	sdk, err := s.factory.ForClientSecret(ctx, secretRef)
+	if err != nil {
+		return "", "", err
+	}
+
+	graphClient := graph.NewGraphClient(sdk)
+	id, statusCode, err := graphClient.GetEntraGroupByID(ctx, groupID)
+
+	if err != nil {
+		return "", statusCode, err
+	}
+
+	return id, statusCode, nil
 }
 
 func (s *Service) Create(ctx context.Context, groupSpec v1alpha1.EntraSecurityGroup) (string, string, error) {
@@ -34,7 +61,7 @@ func (s *Service) Create(ctx context.Context, groupSpec v1alpha1.EntraSecurityGr
 			return "", "", err
 		}
 
-		graphClient := client.NewGraphClient(sdk)
+		graphClient := graph.NewGraphClient(sdk)
 		resp, err := graphClient.CreateEntraGroup(ctx, groupSpec.Spec)
 		if err != nil {
 			return "", "", err
@@ -53,31 +80,6 @@ func (s *Service) Create(ctx context.Context, groupSpec v1alpha1.EntraSecurityGr
 	return "", "", fmt.Errorf("no valid credential reference found in the EntraSecurityGroup spec")
 }
 
-func (s *Service) Get(ctx context.Context, entraGroup v1alpha1.EntraSecurityGroup, groupID string) (string, error) {
-
-	if entraGroup.Spec.ForProvider == nil {
-		return "", fmt.Errorf("credential reference in forProvider spec is nil")
-	}
-
-	secretRef := client.SecretRef{
-		Name:      entraGroup.Spec.ForProvider.CredentialSecretRef,
-		Namespace: entraGroup.Namespace,
-	}
-
-	sdk, err := s.factory.ForClientSecret(ctx, secretRef)
-	if err != nil {
-		return "", err
-	}
-
-	graphClient := client.NewGraphClient(sdk)
-	statusCode, err := graphClient.GetEntraGroupByID(ctx, groupID)
-	if err != nil {
-		return statusCode, err
-	}
-
-	return statusCode, nil
-}
-
 func (s *Service) Delete(ctx context.Context, entraGroup v1alpha1.EntraSecurityGroup, groupID string) error {
 
 	if entraGroup.Spec.ForProvider == nil {
@@ -94,7 +96,7 @@ func (s *Service) Delete(ctx context.Context, entraGroup v1alpha1.EntraSecurityG
 		return fmt.Errorf("failed to create SDK client: %v", err)
 	}
 
-	graphClient := client.NewGraphClient(sdk)
+	graphClient := graph.NewGraphClient(sdk)
 	return graphClient.DeleteEntraGroupByID(ctx, groupID)
 }
 
@@ -119,7 +121,7 @@ func (s *Service) AddMembers(ctx context.Context, entraGroup v1alpha1.EntraSecur
 		return fmt.Errorf("failed to create SDK client: %v", err)
 	}
 
-	graphClient := client.NewGraphClient(sdk)
+	graphClient := graph.NewGraphClient(sdk)
 
 	// call the api to add members
 	if userIDs != nil {
@@ -153,7 +155,7 @@ func (s *Service) CheckMemberIds(ctx context.Context, entraGroup v1alpha1.EntraS
 		return nil, fmt.Errorf("failed to create SDK client: %v", err)
 	}
 
-	graphClient := client.NewGraphClient(sdk)
+	graphClient := graph.NewGraphClient(sdk)
 
 	unManagedMemberIds := []string{}
 	for _, member := range currentManagedMemberIds {

@@ -1,9 +1,8 @@
-package client
+package graph
 
 import (
 	"context"
 
-	msgraphsdk "github.com/microsoftgraph/msgraph-sdk-go"
 	v1alpha1 "github.com/vimal-vijayan/entra-governance/api/v1alpha1"
 )
 
@@ -18,12 +17,4 @@ type EntraGroupClient interface {
 	DeleteEntraGroupByID(ctx context.Context, groupID string) error
 	AddMembersToGroup(ctx context.Context, groupID string, resourceType string, memberRefs []string) error
 	CheckGroupMembers(ctx context.Context, groupID string, memberId string) error
-}
-
-type GraphClient struct {
-	sdk *msgraphsdk.GraphServiceClient
-}
-
-func NewGraphClient(sdk *msgraphsdk.GraphServiceClient) *GraphClient {
-	return &GraphClient{sdk: sdk}
 }

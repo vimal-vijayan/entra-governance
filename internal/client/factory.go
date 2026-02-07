@@ -17,21 +17,6 @@ type ClientFactory struct {
 	k8s client.Client
 }
 
-type SecretRef struct {
-	Name      string
-	Namespace string
-}
-
-type ServiceAccountRef struct {
-	Name      string
-	Namespace string
-}
-
-type GraphClientInterface interface {
-	ForClientSecret(ctx context.Context, ref SecretRef) (*msgraphsdk.GraphServiceClient, error)
-	ForWorkloadIdentity(ctx context.Context, ref ServiceAccountRef) (*msgraphsdk.GraphServiceClient, error)
-}
-
 func (cf *ClientFactory) ForClientSecret(ctx context.Context, ref SecretRef) (*msgraphsdk.GraphServiceClient, error) {
 	logger := log.FromContext(ctx)
 
@@ -87,20 +72,6 @@ func (cf *ClientFactory) setupGraphClient(cred azcore.TokenCredential) (*msgraph
 		return nil, err
 	}
 	return sdk, nil
-}
-
-func getSecretData(secret *corev1.Secret, key string) (string, error) {
-
-	if secret == nil {
-		return "", fmt.Errorf("secret is nil")
-	}
-
-	value, exists := secret.Data[key]
-	if !exists {
-		return "", fmt.Errorf("key %s not found in secret %s/%s", key, secret.Namespace, secret.Name)
-	}
-
-	return string(value), nil
 }
 
 func NewClientFactory(k8s client.Client) *ClientFactory {

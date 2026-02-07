@@ -12,7 +12,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	entraGroup "github.com/vimal-vijayan/entra-governance/api/v1alpha1"
-	groups "github.com/vimal-vijayan/entra-governance/internal/services/group"
+	groups "github.com/vimal-vijayan/entra-governance/internal/services/groups"
 )
 
 // EntraSecurityGroupReconciler reconciles a EntraSecurityGroup object
@@ -106,7 +106,7 @@ func (r *EntraSecurityGroupReconciler) CheckAndUpdateMembers(ctx context.Context
 func (r *EntraSecurityGroupReconciler) CheckAndUpdateGroupExists(ctx context.Context, entraGroup *entraGroup.EntraSecurityGroup) error {
 	logger := log.FromContext(ctx)
 
-	_, err := r.GroupService.Get(ctx, *entraGroup, entraGroup.Status.ID)
+	_, _, err := r.GroupService.Get(ctx, *entraGroup, entraGroup.Status.ID)
 	if err != nil {
 		logger.Error(err, "failed to get Entra Security Group by ID from status", "GroupID", entraGroup.Status.ID)
 		entraGroup.Status.ID = ""
@@ -173,7 +173,7 @@ func (r *EntraSecurityGroupReconciler) ensureFinalizer(ctx context.Context, entr
 func (r *EntraSecurityGroupReconciler) deleteResource(ctx context.Context, entraGroup *entraGroup.EntraSecurityGroup) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
 
-	statusCode, err := r.GroupService.Get(ctx, *entraGroup, entraGroup.Status.ID)
+	_, statusCode, err := r.GroupService.Get(ctx, *entraGroup, entraGroup.Status.ID)
 	if err != nil {
 		if statusCode == "404" {
 			logger.Info("Entra Security Group not found in Entra. Removing finalizer.")
