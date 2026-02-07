@@ -22,12 +22,6 @@ type EntraSecurityGroupReconciler struct {
 	GroupService *groups.Service
 }
 
-const (
-	defaultRequeueDuration           = 10 * time.Minute
-	faildStatusUpdateRequeueDuration = 10 * time.Second
-	entraSecurityGroupFinalizer      = "finalizer.entraSecurityGroup.iam.entra.governance.com"
-)
-
 // +kubebuilder:rbac:groups=iam.entra.governance.com,resources=entrasecuritygroups,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=iam.entra.governance.com,resources=entrasecuritygroups/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=iam.entra.governance.com,resources=entrasecuritygroups/finalizers,verbs=update
@@ -49,7 +43,7 @@ func (r *EntraSecurityGroupReconciler) Reconcile(ctx context.Context, req ctrl.R
 	}
 
 	// Ensure finalizer is present
-	if err := r.ensureFinalizer(ctx, entraGroup); err != nil {
+	if err := EnsureFinalizer(ctx, r.Client, entraGroup, entraSecurityGroupFinalizer); err != nil {
 		return ctrl.Result{RequeueAfter: defaultRequeueDuration}, err
 	}
 
@@ -58,7 +52,6 @@ func (r *EntraSecurityGroupReconciler) Reconcile(ctx context.Context, req ctrl.R
 		return r.deleteResource(ctx, entraGroup)
 	}
 
-	//TODO: Reconciliation logic goes here, later move to helper functions/services
 	if entraGroup.Status.ID == "" {
 		// Group doesn't exist yet, create it
 		return r.createResource(ctx, entraGroup)
@@ -153,20 +146,6 @@ func (r *EntraSecurityGroupReconciler) createResource(ctx context.Context, entra
 
 	logger.Info("Successfully created Entra Security Group", "GroupID", groupId, "DisplayName", groupName)
 	return ctrl.Result{Requeue: true}, nil
-}
-
-// ensure finalizer is present on the resource
-func (r *EntraSecurityGroupReconciler) ensureFinalizer(ctx context.Context, entraGroup *entraGroup.EntraSecurityGroup) error {
-	logger := log.FromContext(ctx)
-	if !controllerutil.ContainsFinalizer(entraGroup, entraSecurityGroupFinalizer) {
-		controllerutil.AddFinalizer(entraGroup, entraSecurityGroupFinalizer)
-		if err := r.Update(ctx, entraGroup); err != nil {
-			logger.Error(err, "failed to add finalizer to EntraSecurityGroup")
-			return err
-		}
-		logger.Info("finalizer added to EntraSecurityGroup")
-	}
-	return nil
 }
 
 // Delete resource and remove finalizer

@@ -8,51 +8,51 @@ metadata:
 spec:
   forProvider:
     credentialSecretRef: entra-graph-credentials # Kubernetes secret name
-  displayName: entraappregistration-sample
-  signInAudience: AzureADMyOrg
-  allowImplicitFlow: true
-  oauth2AllowIdTokenImplicitFlow: true
-  appRoleAssignmentRequired: false
-  disableVisibilityForGuests: true
-  owners:
-    - type: User
-      id: 93ae7387-40a8-4f68-93d0-bba960155bd8 # user
-    - type: ServicePrincipal
-      id: d3b5f5e1-6c4b-4f2e-9f3a-2e5f4c3b2a1d # app registration
-  web:
-    redirectUris:
-      - https://myapp.com/auth/callback
-    logoutUrl: https://myapp.com/logout
-  tags:
-    environment: production
-    team: devops
-  requiredResourceAccess:
-    - resourceAppId: 00000003-0000-0000-c000-000000000000 # Microsoft Graph
-      resourceAccess:
-        - id: e1fe6dd8-ba31-4d61-89e7-88639da4683d # User.Read
-          type: Scope
-        - id: 06da0dbc-49e2-44d2-8310-4f3f2d09b1f0 # Group.Read.All
-          type: Role
-  optionalClaims:
-    idToken:
-      - name: "given_name"
-        source: "user"
-        essential: false
-      - name: "family_name"
-        source: "user"
-        essential: false
-  appRoles:
-    - displayName: "App Reader"
-      description: "Allows reading application data"
-      isEnabled: true
-      value: "App.Reader"
-      allowedMemberTypes:
-        - User
-        - Application
-    - displayName: "App Writer"
-      description: "Allows writing application data"
-      isEnabled: true
-      value: "App.Writer"
-      allowedMemberTypes:
-        - User
-        - Application
+  name: entraappregistration-sample
+  # signInAudience: AzureADMyOrg
+  # allowImplicitFlow: true
+  # oauth2AllowIdTokenImplicitFlow: true
+  # appRoleAssignmentRequired: false
+  # disableVisibilityForGuests: true
+  # owners:
+  #   - type: User
+  #     id: 93ae7387-40a8-4f68-93d0-bba960155bd8 # user
+  #   - type: ServicePrincipal
+  #     id: d3b5f5e1-6c4b-4f2e-9f3a-2e5f4c3b2a1d # app registration
+  # web:
+  #   redirectUris:
+  #     - https://myapp.com/auth/callback
+  #   logoutUrl: https://myapp.com/logout
+  # tags:
+  #   environment: production
+  #   team: devops
+  # requiredResourceAccess:
+  #   - resourceAppId: 00000003-0000-0000-c000-000000000000 # Microsoft Graph
+  #     resourceAccess:
+  #       - id: e1fe6dd8-ba31-4d61-89e7-88639da4683d # User.Read
+  #         type: Scope
+  #       - id: 06da0dbc-49e2-44d2-8310-4f3f2d09b1f0 # Group.Read.All
+  #         type: Role
+  # optionalClaims:
+  #   idToken:
+  #     - name: "given_name"
+  #       source: "user"
+  #       essential: false
+  #     - name: "family_name"
+  #       source: "user"
+  #       essential: false
+  # appRoles:
+  #   - displayName: "App Reader"
+  #     description: "Allows reading application data"
+  #     isEnabled: true
+  #     value: "App.Reader"
+  #     allowedMemberTypes:
+  #       - User
+  #       - Application
+  #   - displayName: "App Writer"
+  #     description: "Allows writing application data"
+  #     isEnabled: true
+  #     value: "App.Writer"
+  #     allowedMemberTypes:
+  #       - User
+  #       - Application

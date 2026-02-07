@@ -38,6 +38,7 @@ import (
 	iamv1alpha1 "github.com/vimal-vijayan/entra-governance/api/v1alpha1"
 	"github.com/vimal-vijayan/entra-governance/internal/client"
 	"github.com/vimal-vijayan/entra-governance/internal/controller"
+	appregistration "github.com/vimal-vijayan/entra-governance/internal/services/applications"
 	groups "github.com/vimal-vijayan/entra-governance/internal/services/groups"
 	// +kubebuilder:scaffold:imports
 )
@@ -149,10 +150,12 @@ func main() {
 	// Initialize client factory and services
 	clientFactory := client.NewClientFactory(mgr.GetClient())
 	groupService := groups.NewService(clientFactory)
+	appService := appregistration.NewService(clientFactory)
 
 	if err = (&controller.EntraAppRegistrationReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
+		Client:     mgr.GetClient(),
+		Scheme:     mgr.GetScheme(),
+		AppService: appService,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "EntraAppRegistration")
 		os.Exit(1)

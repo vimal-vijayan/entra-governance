@@ -50,7 +50,7 @@ type AppRegCredConfig struct {
 	// +kubebuilder:validation:Optional
 	ServiceAccountRef string `json:"serviceAccountRef,omitempty"`
 	// +kubebuilder:validation:Optional
-	CredentialsSecretRef string `json:"credentialsSecretRef,omitempty"`
+	CredentialSecretRef string `json:"credentialSecretRef,omitempty"`
 }
 
 // EntraAppRegistrationStatus defines the observed state of EntraAppRegistration
@@ -60,7 +60,7 @@ type EntraAppRegistrationStatus struct {
 	ObservedGeneration int64 `json:"observedGeneration,omitempty"`
 	// +optional
 	Conditions []metav1.Condition `json:"conditions,omitempty"`
-	// +kubebuilder:validation:Enum=Pending;Available;Failed
+	// Phase represents the current phase of the EntraAppRegistration.
 	Phase string `json:"phase,omitempty"`
 	// AppRegistrationName is the name of the created App Registration in Entra ID
 	AppRegistrationName string `json:"appRegistrationName,omitempty"`
