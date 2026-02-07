@@ -69,7 +69,7 @@ func (r *EntraAppRegistrationReconciler) Reconcile(ctx context.Context, req ctrl
 
 	// appregistration upsert behavior
 	
-	return ctrl.Result{RequeueAfter: defaultRequeueDuration}, nil
+	// return ctrl.Result{RequeueAfter: defaultRequeueDuration}, nil
 }
 
 // SetupWithManager sets up the controller with the Manager.
