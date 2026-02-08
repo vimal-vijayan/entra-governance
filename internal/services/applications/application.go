@@ -68,3 +68,28 @@ func (s *Service) Delete(ctx context.Context, appID string, entraApp appregistra
 
 	return fmt.Errorf("credential secret reference is empty in forProvider spec")
 }
+
+func (s *Service) Update(ctx context.Context, entraApp appregistration.EntraAppRegistration) error {
+
+	if entraApp.Spec.ForProvider == nil {
+		return fmt.Errorf("forProvider spec is nil")
+	}
+
+	secretRef := client.SecretRef{
+		Name:      entraApp.Spec.ForProvider.CredentialSecretRef,
+		Namespace: entraApp.Namespace,
+	}
+
+	if entraApp.Spec.ForProvider.CredentialSecretRef != "" {
+		sdk, err := s.factory.ForClientSecret(ctx, secretRef)
+		if err != nil {
+			return err
+		}
+
+		graphClient := client.NewGraphClient(sdk)
+		err = graphClient.AppRegistration.Update(ctx, entraApp)
+		return err
+	}
+
+	return fmt.Errorf("credential secret reference is empty in forProvider spec")
+}

@@ -66,7 +66,7 @@ func (r *EntraAppRegistrationReconciler) Reconcile(ctx context.Context, req ctrl
 	} else {
 		logger.Info("EntraAppRegistration already exists in status. skipping creation.", "appName", entraAppReg.Name, "clientId", entraAppReg.Status.AppRegistrationID)
 		logger.Info("Reconciling entra app registration attributes.")
-		return reconcileAppRegistrationAttributes(ctx, entraAppReg)
+		return r.updateAppRegistration(ctx, entraAppReg)
 	}
 
 	// appregistration upsert behavior
@@ -122,7 +122,7 @@ func (r *EntraAppRegistrationReconciler) deleteAppRegistration(ctx context.Conte
 		return ctrl.Result{}, nil
 	}
 
-	err := r.AppService.Delete(ctx, entraAppReg.Status.AppRegistrationID, *entraAppReg)
+	err := r.AppService.Delete(ctx, entraAppReg.Status.AppRegistrationObjID, *entraAppReg)
 	if err != nil {
 		logger.Error(err, "Failed to delete app registration in Entra", "appName", entraAppReg.Name, "clientId", entraAppReg.Status.AppRegistrationID)
 		return ctrl.Result{RequeueAfter: defaultRequeueDuration}, err
@@ -137,10 +137,17 @@ func (r *EntraAppRegistrationReconciler) deleteAppRegistration(ctx context.Conte
 	return ctrl.Result{}, nil
 }
 
-func reconcileAppRegistrationAttributes(ctx context.Context, entraAppReg *entragov.EntraAppRegistration) (ctrl.Result, error) {
+func (r *EntraAppRegistrationReconciler) updateAppRegistration(ctx context.Context, entraAppReg *entragov.EntraAppRegistration) (ctrl.Result, error) {
 	// Placeholder for future attribute reconciliation logic
 	logger := log.FromContext(ctx)
-	logger.Info("Reconciliation of EntraAppRegistration attributes is not yet implemented", "appName", entraAppReg.Name)
+
+	logger.Info("Updating EntraAppRegistration attributes - placeholder implementation", "appName", entraAppReg.Name)
+
+	err := r.AppService.Update(ctx, *entraAppReg)
+	if err != nil {
+		logger.Error(err, "Failed to update app registration in Entra", "appName", entraAppReg.Name)
+		return ctrl.Result{RequeueAfter: defaultRequeueDuration}, err
+	}
 
 	// TODO: Implement attribute reconciliation logic here. This may include:
 	// upsert : Create a new application if it doesn't exist
