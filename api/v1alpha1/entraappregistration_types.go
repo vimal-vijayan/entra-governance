@@ -44,6 +44,26 @@ type EntraAppRegistrationSpec struct {
 	// +kubebuilder:validation:MaxLength=120
 	// +kubebuilder:validation:Pattern=`^[^<>%&:\\?\/\*]+$`
 	Name string `json:"name,omitempty"`
+	// +kubebuilder:validation:Optional
+	Tags []string `json:"tags,omitempty"`
+	// +kubebuilder:validation:Optional
+	Description string `json:"description,omitempty"`
+	// +kubebuilder:validation:Optional
+	PublicClient bool `json:"publicClient,omitempty"`
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:validation:Enum=AzureADMyOrg;AzureADMultipleOrgs;AzureADandPersonalMicrosoftAccount;PersonalMicrosoftAccount
+	// +kubebuilder:default=AzureADMyOrg
+	SignInAudience string `json:"signInAudience,omitempty"`
+	// +kubebuilder:validation:Optional
+	SamlMetadataUrl string `json:"samlMetadataUrl,omitempty"`
+	// +kubebuilder:validation:Optional
+	IsFallbackPublicClient bool `json:"isFallbackPublicClient,omitempty"`
+	// +kubebuilder:validation:Optional
+	IsDeviceOnlyAuthSupported bool `json:"isDeviceOnlyAuthSupported,omitempty"`
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:validation:Enum=None;SecurityGroup;All
+	// +kubebuilder:default=None
+	GroupMembershipClaims string `json:"groupMembershipClaims,omitempty"`
 }
 
 type AppRegCredConfig struct {

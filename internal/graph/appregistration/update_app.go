@@ -10,10 +10,9 @@ import (
 
 func (s *Service) Update(ctx context.Context, app appregistration.EntraAppRegistration) error {
 	logger := log.FromContext(ctx)
+	appSpec := app.Spec
 
-	requestbody := graphmodels.NewApplication()
-	requestbody.SetDisplayName(&app.Spec.Name)
-	requestbody.SetTags([]string{"updated : test"})
+	requestbody := generateBasicRequestBody(appSpec)
 
 	_, err := s.sdk.Applications().ByApplicationId(app.Status.AppRegistrationObjID).Patch(ctx, requestbody, nil)
 
@@ -24,4 +23,19 @@ func (s *Service) Update(ctx context.Context, app appregistration.EntraAppRegist
 
 	logger.Info("application updated successfully", "applicationName", app.Spec.Name, "applicationID", app.Status.AppRegistrationID)
 	return nil
+}
+
+func generateBasicRequestBody(app appregistration.EntraAppRegistrationSpec) *graphmodels.Application {
+	requestbody := graphmodels.NewApplication()
+	requestbody.SetDisplayName(&app.Name)
+	// requestbody.SetUniqueName(&app.Name)
+	requestbody.SetDescription(&app.Description)
+	requestbody.SetTags(app.Tags)
+	requestbody.SetSignInAudience(&app.SignInAudience)
+	requestbody.SetSamlMetadataUrl(&app.SamlMetadataUrl)
+	requestbody.SetIsFallbackPublicClient(&app.IsFallbackPublicClient)
+	requestbody.SetIsDeviceOnlyAuthSupported(&app.IsDeviceOnlyAuthSupported)
+	requestbody.SetGroupMembershipClaims(&app.GroupMembershipClaims)
+
+	return requestbody
 }

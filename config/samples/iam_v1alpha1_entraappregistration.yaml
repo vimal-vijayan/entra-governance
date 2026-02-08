@@ -8,7 +8,11 @@ metadata:
 spec:
   forProvider:
     credentialSecretRef: entra-graph-credentials # Kubernetes secret name
-  name: entraappregistration-sample
+  name: entraappregistration-sample-boom
+  description: "Sample App Registration created by Entra Governance Operator"
+  tags:
+    - "owner: vimal vijayan"
+    - "description: sample app registration created by Entra Governance Operator"
   # signInAudience: AzureADMyOrg
   # allowImplicitFlow: true
   # oauth2AllowIdTokenImplicitFlow: true
@@ -23,9 +27,6 @@ spec:
   #   redirectUris:
   #     - https://myapp.com/auth/callback
   #   logoutUrl: https://myapp.com/logout
-  # tags:
-  #   environment: production
-  #   team: devops
   # requiredResourceAccess:
   #   - resourceAppId: 00000003-0000-0000-c000-000000000000 # Microsoft Graph
   #     resourceAccess:

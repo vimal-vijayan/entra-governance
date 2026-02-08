@@ -12,6 +12,9 @@ func (s *Service) Create(ctx context.Context, app appregistration.EntraAppRegist
 	logger := log.FromContext(ctx)
 	entraApp := graphmodels.NewApplication()
 	entraApp.SetDisplayName(&app.Name)
+	entraApp.SetUniqueName(&app.Name)
+	entraApp.SetDescription(&app.Description)
+	entraApp.SetTags(app.Tags)
 
 	client, err := s.sdk.Applications().Post(ctx, entraApp, nil)
 	if err != nil {

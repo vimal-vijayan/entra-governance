@@ -39,6 +39,8 @@ spec:
             type: object
           spec:
             properties:
+              description:
+                type: string
               forProvider:
                 properties:
                   credentialSecretRef:
@@ -46,11 +48,38 @@ spec:
                   serviceAccountRef:
                     type: string
                 type: object
+              groupMembershipClaims:
+                default: None
+                enum:
+                - None
+                - SecurityGroup
+                - All
+                type: string
+              isDeviceOnlyAuthSupported:
+                type: boolean
+              isFallbackPublicClient:
+                type: boolean
               name:
                 maxLength: 120
                 minLength: 1
                 pattern: ^[^<>%&:\\?\/\*]+$
                 type: string
+              publicClient:
+                type: boolean
+              samlMetadataUrl:
+                type: string
+              signInAudience:
+                default: AzureADMyOrg
+                enum:
+                - AzureADMyOrg
+                - AzureADMultipleOrgs
+                - AzureADandPersonalMicrosoftAccount
+                - PersonalMicrosoftAccount
+                type: string
+              tags:
+                items:
+                  type: string
+                type: array
             required:
             - forProvider
             - name
