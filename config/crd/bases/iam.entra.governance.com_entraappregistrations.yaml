@@ -41,7 +41,7 @@ spec:
             properties:
               forProvider:
                 properties:
-                  credentialsSecretRef:
+                  credentialSecretRef:
                     type: string
                   serviceAccountRef:
                     type: string
@@ -133,10 +133,7 @@ spec:
                 format: int64
                 type: integer
               phase:
-                enum:
-                - Pending
-                - Available
-                - Failed
+                description: Phase represents the current phase of the EntraAppRegistration.
                 type: string
             type: object
         type: object
