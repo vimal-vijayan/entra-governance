@@ -6,7 +6,6 @@ import (
 
 	"github.com/vimal-vijayan/entra-governance/api/v1alpha1"
 	"github.com/vimal-vijayan/entra-governance/internal/client"
-	"github.com/vimal-vijayan/entra-governance/internal/graph"
 )
 
 type Service struct {
@@ -33,14 +32,15 @@ func (s *Service) Get(ctx context.Context, entraGroup v1alpha1.EntraSecurityGrou
 		return "", "", err
 	}
 
-	graphClient := graph.NewGraphClient(sdk)
-	id, statusCode, err := graphClient.GetEntraGroupByID(ctx, groupID)
+	graphClient := client.NewGraphClient(sdk)
+	// id, statusCode, err := graphClient.GetEntraGroupByID(ctx, groupID)
+	resp, err := graphClient.Groups.Get(ctx, groupID)
 
 	if err != nil {
-		return "", statusCode, err
+		return "", resp.HttpStatusCode, err
 	}
 
-	return id, statusCode, nil
+	return resp.ID, resp.HttpStatusCode, nil
 }
 
 func (s *Service) Create(ctx context.Context, groupSpec v1alpha1.EntraSecurityGroup) (string, string, error) {
@@ -61,8 +61,9 @@ func (s *Service) Create(ctx context.Context, groupSpec v1alpha1.EntraSecurityGr
 			return "", "", err
 		}
 
-		graphClient := graph.NewGraphClient(sdk)
-		resp, err := graphClient.CreateEntraGroup(ctx, groupSpec.Spec)
+		graphClient := client.NewGraphClient(sdk)
+		// resp, err := graphClient.CreateEntraGroup(ctx, groupSpec.Spec)
+		resp, err := graphClient.Groups.Create(ctx, groupSpec.Spec)
 		if err != nil {
 			return "", "", err
 		}
@@ -96,8 +97,9 @@ func (s *Service) Delete(ctx context.Context, entraGroup v1alpha1.EntraSecurityG
 		return fmt.Errorf("failed to create SDK client: %v", err)
 	}
 
-	graphClient := graph.NewGraphClient(sdk)
-	return graphClient.DeleteEntraGroupByID(ctx, groupID)
+	graphClient := client.NewGraphClient(sdk)
+	// return graphClient.DeleteEntraGroupByID(ctx, groupID)
+	return graphClient.Groups.Delete(ctx, groupID)
 }
 
 func (s *Service) AddMembers(ctx context.Context, entraGroup v1alpha1.EntraSecurityGroup) error {
@@ -113,22 +115,22 @@ func (s *Service) AddMembers(ctx context.Context, entraGroup v1alpha1.EntraSecur
 	// Fetch service principal IDs using spec
 	var servicePrincipalIDs = getMemberIDs(entraGroup, "ServicePrincipal")
 
-	sdk, err := s.factory.ForClientSecret(ctx, client.SecretRef{
-		Name:      entraGroup.Spec.ForProvider.CredentialSecretRef,
-		Namespace: entraGroup.Namespace,
-	})
-	if err != nil {
-		return fmt.Errorf("failed to create SDK client: %v", err)
-	}
+	// sdk, err := s.factory.ForClientSecret(ctx, client.SecretRef{
+	// 	Name:      entraGroup.Spec.ForProvider.CredentialSecretRef,
+	// 	Namespace: entraGroup.Namespace,
+	// })
+	// if err != nil {
+	// 	return fmt.Errorf("failed to create SDK client: %v", err)
+	// }
 
-	graphClient := graph.NewGraphClient(sdk)
+	// graphClient := client.NewGraphClient(sdk)
 
 	// call the api to add members
 	if userIDs != nil {
-		err := graphClient.AddMembersToGroup(ctx, entraGroup.Status.ID, "users", userIDs)
-		if err != nil {
-			return fmt.Errorf("failed to add users as members to group: %v", err)
-		}
+		// err := graphClient.Groups.AddMembers(ctx, entraGroup, entraGroup.Status.ID, "users", userIDs)
+		// if err != nil {
+		// 	return fmt.Errorf("failed to add users as members to group: %v", err)
+		// }
 	}
 
 	if groupIDs != nil {
@@ -144,26 +146,27 @@ func (s *Service) AddMembers(ctx context.Context, entraGroup v1alpha1.EntraSecur
 
 func (s *Service) CheckMemberIds(ctx context.Context, entraGroup v1alpha1.EntraSecurityGroup) ([]string, error) {
 
-	currentManagedMemberIds := entraGroup.Status.ManagedMemberGroups
+	// currentManagedMemberIds := entraGroup.Status.ManagedMemberGroups
 
-	sdk, err := s.factory.ForClientSecret(ctx, client.SecretRef{
-		Name:      entraGroup.Spec.ForProvider.CredentialSecretRef,
-		Namespace: entraGroup.Namespace,
-	})
+	// sdk, err := s.factory.ForClientSecret(ctx, client.SecretRef{
+	// 	Name:      entraGroup.Spec.ForProvider.CredentialSecretRef,
+	// 	Namespace: entraGroup.Namespace,
+	// })
 
-	if err != nil {
-		return nil, fmt.Errorf("failed to create SDK client: %v", err)
-	}
+	// if err != nil {
+	// 	return nil, fmt.Errorf("failed to create SDK client: %v", err)
+	// }
 
-	graphClient := graph.NewGraphClient(sdk)
+	// graphClient := client.NewGraphClient(sdk)
 
-	unManagedMemberIds := []string{}
-	for _, member := range currentManagedMemberIds {
-		err := graphClient.CheckGroupMembers(ctx, entraGroup.Status.ID, member)
-		if err != nil {
-			unManagedMemberIds = append(unManagedMemberIds, member)
-		}
-	}
+	var unManagedMemberIds = []string{}
+	// for _, member := range currentManagedMemberIds {
+	// err := graphClient.CheckGroupMembers(ctx, entraGroup.Status.ID, member)
+	// err := graphClient.Groups.CheckMembers(ctx, entraGroup, entraGroup.Status.ID, member)
+	// if err != nil {
+	// unManagedMemberIds = append(unManagedMemberIds, member)
+	// }
+	// }
 
 	return unManagedMemberIds, nil
 }

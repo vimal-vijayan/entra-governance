@@ -6,7 +6,6 @@ import (
 
 	appregistration "github.com/vimal-vijayan/entra-governance/api/v1alpha1"
 	"github.com/vimal-vijayan/entra-governance/internal/client"
-	"github.com/vimal-vijayan/entra-governance/internal/graph"
 )
 
 type Service struct {
@@ -34,12 +33,13 @@ func (s *Service) Create(ctx context.Context, entraApp appregistration.EntraAppR
 			return "", "", err
 		}
 
-		graphClient := graph.NewGraphClient(sdk)
-		response, err := graphClient.CreateEntraApplication(ctx, entraApp.Spec)
+		graphClient := client.NewGraphClient(sdk)
+		// response, err := graphClient.CreateEntraApplication(ctx, entraApp.Spec)
+		response, err := graphClient.AppRegistration.Create(ctx, entraApp.Spec)
 		if err != nil {
 			return "", "", err
 		}
-		return response.ClientID, response.PrincipalID, nil
+		return response.AppClientID, response.AppObjectID, nil
 	}
 
 	return "", "", fmt.Errorf("credential secret reference is empty in forProvider spec")
@@ -62,8 +62,8 @@ func (s *Service) Delete(ctx context.Context, appID string, entraApp appregistra
 			return err
 		}
 
-		graphClient := graph.NewGraphClient(sdk)
-		return graphClient.DeleteEntraApplicationByID(ctx, appID)
+		graphClient := client.NewGraphClient(sdk)
+		return graphClient.AppRegistration.Delete(ctx, appID)
 	}
 
 	return fmt.Errorf("credential secret reference is empty in forProvider spec")

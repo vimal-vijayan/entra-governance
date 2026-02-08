@@ -45,7 +45,9 @@ func (r *EntraAppRegistrationReconciler) Reconcile(ctx context.Context, req ctrl
 
 	entraAppReg := &entragov.EntraAppRegistration{}
 	if err := r.Get(ctx, req.NamespacedName, entraAppReg); err != nil {
-		logger.Error(err, "Failed to get EntraAppRegistration")
+		if client.IgnoreNotFound(err) != nil {
+			logger.Error(err, "EntraAppRegistration resource not found. skipping reconciliation.")
+		}
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
@@ -68,7 +70,7 @@ func (r *EntraAppRegistrationReconciler) Reconcile(ctx context.Context, req ctrl
 	}
 
 	// appregistration upsert behavior
-	
+
 	// return ctrl.Result{RequeueAfter: defaultRequeueDuration}, nil
 }
 
@@ -101,13 +103,8 @@ func (r *EntraAppRegistrationReconciler) createAppRegistration(ctx context.Conte
 		return ctrl.Result{RequeueAfter: defaultRequeueDuration}, err
 	}
 
-	if err := r.Status().Update(ctx, entraAppReg); err != nil {
-		logger.Error(err, "Failed to update EntraAppRegistration status after creation", "appName", entraAppReg.Name)
-		return ctrl.Result{RequeueAfter: defaultRequeueDuration}, err
-	}
-
 	logger.Info("EntraAppRegistration created successfully in Entra", "appName", entraAppReg.Name, "clientId", clientId, "principalId", principalId)
-	return ctrl.Result{Requeue: true}, nil
+	return ctrl.Result{RequeueAfter: defaultRequeueDuration}, nil
 }
 
 func (r *EntraAppRegistrationReconciler) deleteAppRegistration(ctx context.Context, entraAppReg *entragov.EntraAppRegistration) (ctrl.Result, error) {
@@ -121,7 +118,8 @@ func (r *EntraAppRegistrationReconciler) deleteAppRegistration(ctx context.Conte
 			return ctrl.Result{RequeueAfter: defaultRequeueDuration}, err
 		}
 		logger.Info("Finalizer removed successfully from EntraAppRegistration", "appName", entraAppReg.Name)
-		return ctrl.Result{RequeueAfter: defaultRequeueDuration}, nil
+
+		return ctrl.Result{}, nil
 	}
 
 	err := r.AppService.Delete(ctx, entraAppReg.Status.AppRegistrationID, *entraAppReg)
@@ -130,8 +128,13 @@ func (r *EntraAppRegistrationReconciler) deleteAppRegistration(ctx context.Conte
 		return ctrl.Result{RequeueAfter: defaultRequeueDuration}, err
 	}
 
+	if err := RemoveFinalizer(ctx, r.Client, entraAppReg, entraAppRegistrationFinalizer); err != nil {
+		logger.Error(err, "Failed to remove finalizer from EntraAppRegistration after deletion", "appName", entraAppReg.Name)
+		return ctrl.Result{RequeueAfter: defaultRequeueDuration}, err
+	}
+
 	logger.Info("Entra App Registration deleted successfully in Entra", "appName", entraAppReg.Name, "clientId", entraAppReg.Status.AppRegistrationID)
-	return ctrl.Result{Requeue: true}, nil
+	return ctrl.Result{}, nil
 }
 
 func reconcileAppRegistrationAttributes(ctx context.Context, entraAppReg *entragov.EntraAppRegistration) (ctrl.Result, error) {
