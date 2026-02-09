@@ -1,0 +1,147 @@
+apiVersion: iam.entra.governance.com/v1alpha1
+kind: EntraAppRegistration
+metadata:
+  name: entraappregistration-sample
+  labels:
+    app.kubernetes.io/name: entra-governance
+    app.kubernetes.io/managed-by: kustomize
+spec:
+  forProvider:
+    credentialSecretRef: entra-graph-credentials   # Kubernetes secret holding Graph auth details
+  name: entraappregistration-extended
+  description: "Sample App Registration with extended spec fields for Entra Governance Operator"
+  owners:
+    - userPrincipalName: vimal@contoso.com
+  tags:
+    - "owner:vimal-vijayan"
+    - "env:dev"
+    - "costcenter:cc-0123"
+  notes: "Owned by Platform Engineering. Created via Entra Governance Operator."
+  application:
+    displayName: entraappregistration-sample-boom
+    description: "Sample App Registration created by Entra Governance Operator"
+    signInAudience: AzureADMyOrg                   # AzureADMyOrg | AzureADMultipleOrgs | AzureADandPersonalMicrosoftAccount
+    groupMembershipClaims: None                    # None | SecurityGroup | All
+    identifierUris:
+      - "api://entraappregistration-sample-boom"
+    # If you expose API scopes or app roles
+    api:
+      requestedAccessTokenVersion: 2
+      oauth2PermissionScopes:
+        - value: "user_impersonation"
+          adminConsentDisplayName: "Access the API as a user"
+          adminConsentDescription: "Allow the application to access the API on behalf of the signed-in user."
+          userConsentDisplayName: "Access the API"
+          userConsentDescription: "Allow the application to access the API on your behalf."
+          isEnabled: true
+      preAuthorizedApplications:
+        - appId: "11111111-2222-3333-4444-555555555555"   # client appId that can call without consent
+          delegatedPermissionIds:
+            - "00000000-0000-0000-0000-000000000000"      # scope id(s) (you’ll store/resolve these)
+    appRoles:
+      - value: "Admin"
+        displayName: "Admin"
+        description: "Administrators can manage the application."
+        allowedMemberTypes: ["User", "Application"]
+        isEnabled: true
+    # Web app settings (redirect URIs etc.)
+    web:
+      homepageUrl: "https://app.example.com"
+      logoutUrl: "https://app.example.com/logout"
+      redirectUris:
+        - "https://app.example.com/auth/callback"
+        - "https://app.example.com/signin-oidc"
+      implicitGrant:
+        enableAccessTokenIssuance: false
+        enableIdTokenIssuance: true
+    spa:
+      redirectUris:
+        - "https://spa.example.com/auth/callback"
+
+    # Public client (native) settings
+    publicClient:
+      redirectUris:
+        - "msauth://com.example.app/abcd1234"
+
+    # Credentials (optional). Many orgs prefer “operator creates secret and stores in Key Vault”.
+    credentials:
+      passwordCredentials:
+        - displayName: "automation-secret"
+          rotation:
+            enabled: true
+            rotateBeforeExpiryDays: 14
+          validityDays: 180
+          storeIn:
+            keyVault:
+              name: "kv-platform-dev"
+              secretName: "entraappregistration-sample-boom-client-secret"
+      # certificates:
+      #   - displayName: "automation-cert"
+      #     storeInKeyVault: ...
+
+    # Required API permissions (Graph “requiredResourceAccess”)
+    requiredResourceAccess:
+      - resourceAppId: "00000003-0000-0000-c000-000000000000"  # Microsoft Graph
+        resourceAccess:
+          - type: Scope
+            value: "User.Read"
+          - type: Role
+            value: "Directory.Read.All"
+
+    optionalClaims:
+      idToken:
+        - name: "email"
+          essential: false
+      accessToken:
+        - name: "groups"
+          essential: false
+
+    # Claim mapping / SSO enterprise settings are bigger topics; keep placeholders
+    # claimsMappingPolicyRef: ...
+    # tokenEncryptionKeyVaultRef: ...
+
+    visibility:
+      # NOTE: "disableVisibilityForGuests" is NOT an application property in many cases.
+      # If you want "hide app from guests", that’s usually service principal / enterprise app visibility.
+      publishToMyApps: true                         # if you implement; otherwise remove
+
+
+  servicePrincipal:
+    enabled: true
+    accountEnabled: true
+    disableVisibilityForGuests: true                # your abstraction; you implement the right Graph calls
+
+    # Visibility / UX controls (commonly desired)
+    visibility:
+      hideFromMyApps: false
+      hideFromGuestUsers: true                      # your abstraction; you implement the right Graph calls
+
+    # Enterprise app assignment requirements etc.
+    appRoleAssignmentRequired: true                 # require assignment to access
+
+    # Optional: assign owners here too (if different from application owners)
+    owners:
+      - userPrincipalName: vimal@contoso.com
+
+    # Optional: group assignments to enterprise app (if you want operator-managed access)
+    assignments:
+      groups:
+        - objectId: "99999999-8888-7777-6666-555555555555"
+          appRoleValue: "Admin"                     # maps to app role value above
+
+    # Optional: SSO mode selection (if you later manage SAML/OIDC config)
+    singleSignOn:
+      mode: OIDC                                    # OIDC | SAML | Password | Linked | None
+
+  # =========================
+  # Status shaping you’ll probably want (example; you’d actually put this in status)
+  # =========================
+  # status:
+  #   application:
+  #     objectId: ...
+  #     appId: ...
+  #   servicePrincipal:
+  #     objectId: ...
+  #   observed:
+  #     appSpecHash: ...
+  #     spSpecHash: ...

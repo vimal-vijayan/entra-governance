@@ -41,15 +41,19 @@ func (s *Service) getGraphClient(ctx context.Context, entraApp appregistration.E
 
 func (s *Service) Create(ctx context.Context, entraApp appregistration.EntraAppRegistration) (string, error) {
 
+	displayName := entraApp.Spec.Name
+	spnParameters := entraApp.Spec.ServicePrincipal
+
 	graphClient, err := s.getGraphClient(ctx, entraApp)
 	if err != nil {
 		return "", err
 	}
 
 	resp, err := graphClient.ServicePrincipals.Create(ctx, serviceprincipal.CreateRequest{
-		DisplayName:                entraApp.Spec.Name,
+		DisplayName:                displayName,
 		AppID:                      entraApp.Status.AppRegistrationID,
-		DisableVisibilityForGuests: entraApp.Spec.DisableVisibilityForGuests,
+		DisableVisibilityForGuests: spnParameters.DisableVisibilityForGuests,
+		AccountEnabled:             spnParameters.AccountEnabled,
 	})
 
 	if err != nil {

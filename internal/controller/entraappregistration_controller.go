@@ -92,7 +92,7 @@ func (r *EntraAppRegistrationReconciler) SetupWithManager(mgr ctrl.Manager) erro
 func (r *EntraAppRegistrationReconciler) ensureServicePrincipal(ctx context.Context, entraAppReg *entragov.EntraAppRegistration) error {
 	logger := log.FromContext(ctx)
 
-	if !entraAppReg.Spec.EnableServicePrincipal {
+	if !entraAppReg.Spec.ServicePrincipal.Enabled {
 		logger.Info("Service principal creation is disabled for this app registration. Skipping service principal creation.", "appName", entraAppReg.Name)
 		return nil
 	}

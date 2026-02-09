@@ -71,10 +71,18 @@ type EntraAppRegistrationSpec struct {
 	// +kubebuilder:default=None
 	GroupMembershipClaims string `json:"groupMembershipClaims,omitempty"`
 	// +kubebuilder:validation:Optional
+	ServicePrincipal *ServicePrincipalParams `json:"servicePrincipal,omitempty"`
+}
+
+type ServicePrincipalParams struct {
+	// +kubebuilder:validation:Optional
 	// +kubebuilder:default=false
-	EnableServicePrincipal bool `json:"enableServicePrincipal,omitempty"`
+	Enabled bool `json:"enabled,omitempty"`
 	// +kubebuilder:validation:Optional
 	// +kubebuilder:default=true
+	AccountEnabled bool `json:"accountEnabled,omitempty"`
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:default=false
 	DisableVisibilityForGuests bool `json:"disableVisibilityForGuests,omitempty"`
 }
 

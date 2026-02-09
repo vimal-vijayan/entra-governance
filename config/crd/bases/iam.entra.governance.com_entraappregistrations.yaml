@@ -60,12 +60,6 @@ spec:
             properties:
               description:
                 type: string
-              disableVisibilityForGuests:
-                default: true
-                type: boolean
-              enableServicePrincipal:
-                default: false
-                type: boolean
               forProvider:
                 properties:
                   credentialSecretRef:
@@ -93,6 +87,18 @@ spec:
                 type: boolean
               samlMetadataUrl:
                 type: string
+              servicePrincipal:
+                properties:
+                  accountEnabled:
+                    default: true
+                    type: boolean
+                  disableVisibilityForGuests:
+                    default: false
+                    type: boolean
+                  enabled:
+                    default: false
+                    type: boolean
+                type: object
               signInAudience:
                 default: AzureADMyOrg
                 enum:

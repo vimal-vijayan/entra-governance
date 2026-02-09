@@ -7,14 +7,15 @@ metadata:
   name: entraappregistration-sample
 spec:
   forProvider:
-    credentialSecretRef: entra-graph-credentials # Kubernetes secret name
+    credentialSecretRef: entra-graph-credentials
   name: entraappregistration-sample-boom
   description: "Sample App Registration created by Entra Governance Operator"
   tags:
     - "owner: vimal vijayan"
     - "description: sample app registration created by Entra Governance Operator"
-  enableServicePrincipal: true
-  disableVisibilityForGuests: true
+  servicePrincipal:
+    enabled: true
+    disableVisibilityForGuests: true
   # signInAudience: AzureADMyOrg
   # allowImplicitFlow: true
   # oauth2AllowIdTokenImplicitFlow: true
