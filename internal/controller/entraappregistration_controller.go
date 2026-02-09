@@ -26,6 +26,7 @@ import (
 
 	entragov "github.com/vimal-vijayan/entra-governance/api/v1alpha1"
 	appregistration "github.com/vimal-vijayan/entra-governance/internal/services/applications"
+	serviceprincipal "github.com/vimal-vijayan/entra-governance/internal/services/serviceprincipals"
 )
 
 // EntraAppRegistrationReconciler reconciles a EntraAppRegistration object
@@ -33,6 +34,7 @@ type EntraAppRegistrationReconciler struct {
 	client.Client
 	Scheme     *runtime.Scheme
 	AppService *appregistration.Service
+	SPService  *serviceprincipal.Service
 }
 
 // +kubebuilder:rbac:groups=iam.entra.governance.com,resources=entraappregistrations,verbs=get;list;watch;create;update;patch;delete
@@ -61,17 +63,36 @@ func (r *EntraAppRegistrationReconciler) Reconcile(ctx context.Context, req ctrl
 		return r.deleteAppRegistration(ctx, entraAppReg)
 	}
 
-	if entraAppReg.Status.AppRegistrationID == "" && entraAppReg.Status.AppRegistrationObjID == "" {
-		return r.createAppRegistration(ctx, entraAppReg)
-	} else {
-		logger.Info("EntraAppRegistration already exists in status. skipping creation.", "appName", entraAppReg.Name, "clientId", entraAppReg.Status.AppRegistrationID)
-		logger.Info("Reconciling entra app registration attributes.")
-		return r.updateAppRegistration(ctx, entraAppReg)
+	if entraAppReg.Status.AppRegistrationID != "" && entraAppReg.Status.AppRegistrationObjID != "" {
+		if err := r.updateAppRegistration(ctx, entraAppReg); err != nil {
+			return ctrl.Result{RequeueAfter: defaultRequeueDuration}, err
+		}
 	}
 
-	// appregistration upsert behavior
+	if entraAppReg.Status.AppRegistrationID == "" && entraAppReg.Status.AppRegistrationObjID == "" {
+		return r.createAppRegistration(ctx, entraAppReg)
+	}
 
-	// return ctrl.Result{RequeueAfter: defaultRequeueDuration}, nil
+	if err := r.ensureServicePrincipal(ctx, entraAppReg); err != nil {
+		logger.Error(err, "Failed to ensure service principal for app registration", "appName", entraAppReg.Name)
+		return ctrl.Result{RequeueAfter: defaultRequeueDuration}, err
+	}
+
+	return ctrl.Result{RequeueAfter: defaultRequeueDuration}, nil
+}
+
+// ensure service principal
+func (r *EntraAppRegistrationReconciler) ensureServicePrincipal(ctx context.Context, entraAppReg *entragov.EntraAppRegistration) error {
+	// logger := log.FromContext(ctx)
+
+	// _, err := r.SPService.Update(ctx, *entraAppReg)
+	// if err != nil {
+	// 	logger.Error(err, "Failed to ensure service principal for app registration", "appName", entraAppReg.Name)
+	// 	return err
+	// }
+
+	// logger.Info("Service principal ensured successfully for app registration", "appName", entraAppReg.Name)
+	return nil
 }
 
 // SetupWithManager sets up the controller with the Manager.
@@ -137,21 +158,31 @@ func (r *EntraAppRegistrationReconciler) deleteAppRegistration(ctx context.Conte
 	return ctrl.Result{}, nil
 }
 
-func (r *EntraAppRegistrationReconciler) updateAppRegistration(ctx context.Context, entraAppReg *entragov.EntraAppRegistration) (ctrl.Result, error) {
+func (r *EntraAppRegistrationReconciler) updateAppRegistration(ctx context.Context, entraAppReg *entragov.EntraAppRegistration) error {
 	// Placeholder for future attribute reconciliation logic
 	logger := log.FromContext(ctx)
 
-	logger.Info("Updating EntraAppRegistration attributes - placeholder implementation", "appName", entraAppReg.Name)
+	logger.Info("reconiling EntraAppRegistration", "appName", entraAppReg.Name)
 
 	err := r.AppService.Update(ctx, *entraAppReg)
+
 	if err != nil {
 		logger.Error(err, "Failed to update app registration in Entra", "appName", entraAppReg.Name)
-		return ctrl.Result{RequeueAfter: defaultRequeueDuration}, err
+		return err
+	}
+
+	entraAppReg.Status.Phase = "Available"
+	entraAppReg.Status.ObservedGeneration = entraAppReg.Generation
+
+	if err := r.Status().Update(ctx, entraAppReg); err != nil {
+		logger.Error(err, "Failed to update EntraAppRegistration status after creation", "appName", entraAppReg.Name)
+		return err
 	}
 
 	// TODO: Implement attribute reconciliation logic here. This may include:
 	// upsert : Create a new application if it doesn't exist
 	// upsert : Update an existing application
 	// DOC: https://learn.microsoft.com/en-us/graph/api/application-upsert?view=graph-rest-1.0&tabs=http#examples
-	return ctrl.Result{RequeueAfter: defaultRequeueDuration}, nil
+	// return ctrl.Result{RequeueAfter: defaultRequeueDuration}, nil
+	return nil
 }

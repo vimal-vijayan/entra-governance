@@ -28,7 +28,6 @@ func (s *Service) Update(ctx context.Context, app appregistration.EntraAppRegist
 func generateBasicRequestBody(app appregistration.EntraAppRegistrationSpec) *graphmodels.Application {
 	requestbody := graphmodels.NewApplication()
 	requestbody.SetDisplayName(&app.Name)
-	// requestbody.SetUniqueName(&app.Name)
 	requestbody.SetDescription(&app.Description)
 	requestbody.SetTags(app.Tags)
 	requestbody.SetSignInAudience(&app.SignInAudience)
@@ -36,6 +35,5 @@ func generateBasicRequestBody(app appregistration.EntraAppRegistrationSpec) *gra
 	requestbody.SetIsFallbackPublicClient(&app.IsFallbackPublicClient)
 	requestbody.SetIsDeviceOnlyAuthSupported(&app.IsDeviceOnlyAuthSupported)
 	requestbody.SetGroupMembershipClaims(&app.GroupMembershipClaims)
-
 	return requestbody
 }

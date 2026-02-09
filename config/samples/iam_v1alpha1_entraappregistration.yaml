@@ -13,6 +13,7 @@ spec:
   tags:
     - "owner: vimal vijayan"
     - "description: sample app registration created by Entra Governance Operator"
+  enableServicePrincipal: true
   # signInAudience: AzureADMyOrg
   # allowImplicitFlow: true
   # oauth2AllowIdTokenImplicitFlow: true

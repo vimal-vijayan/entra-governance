@@ -16,10 +16,13 @@ func NewService(factory *client.ClientFactory) *Service {
 	return &Service{factory: factory}
 }
 
-func (s *Service) Create(ctx context.Context, entraApp appregistration.EntraAppRegistration) (string, string, error) {
-
+func (s *Service) getGraphClient(ctx context.Context, entraApp appregistration.EntraAppRegistration) (*client.GraphClient, error) {
 	if entraApp.Spec.ForProvider == nil {
-		return "", "", fmt.Errorf("forProvider spec is nil")
+		return nil, fmt.Errorf("forProvider spec is nil")
+	}
+
+	if entraApp.Spec.ForProvider.CredentialSecretRef == "" {
+		return nil, fmt.Errorf("credential secret reference is empty in forProvider spec")
 	}
 
 	secretRef := client.SecretRef{
@@ -27,69 +30,50 @@ func (s *Service) Create(ctx context.Context, entraApp appregistration.EntraAppR
 		Namespace: entraApp.Namespace,
 	}
 
-	if entraApp.Spec.ForProvider.CredentialSecretRef != "" {
-		sdk, err := s.factory.ForClientSecret(ctx, secretRef)
-		if err != nil {
-			return "", "", err
-		}
-
-		graphClient := client.NewGraphClient(sdk)
-		// response, err := graphClient.CreateEntraApplication(ctx, entraApp.Spec)
-		response, err := graphClient.AppRegistration.Create(ctx, entraApp.Spec)
-		if err != nil {
-			return "", "", err
-		}
-		return response.AppClientID, response.AppObjectID, nil
+	sdk, err := s.factory.ForClientSecret(ctx, secretRef)
+	if err != nil {
+		return nil, err
 	}
 
-	return "", "", fmt.Errorf("credential secret reference is empty in forProvider spec")
+	return client.NewGraphClient(sdk), nil
+}
+
+func (s *Service) Create(ctx context.Context, entraApp appregistration.EntraAppRegistration) (string, string, error) {
+	graphClient, err := s.getGraphClient(ctx, entraApp)
+	if err != nil {
+		return "", "", err
+	}
+
+	response, err := graphClient.AppRegistration.Create(ctx, entraApp.Spec)
+	if err != nil {
+		return "", "", err
+	}
+	return response.AppClientID, response.AppObjectID, nil
 }
 
 func (s *Service) Delete(ctx context.Context, appID string, entraApp appregistration.EntraAppRegistration) error {
-
-	if entraApp.Spec.ForProvider == nil {
-		return fmt.Errorf("forProvider spec is nil")
-	}
-
-	secretRef := client.SecretRef{
-		Name:      entraApp.Spec.ForProvider.CredentialSecretRef,
-		Namespace: entraApp.Namespace,
-	}
-
-	if entraApp.Spec.ForProvider.CredentialSecretRef != "" {
-		sdk, err := s.factory.ForClientSecret(ctx, secretRef)
-		if err != nil {
-			return err
-		}
-
-		graphClient := client.NewGraphClient(sdk)
-		return graphClient.AppRegistration.Delete(ctx, appID)
-	}
-
-	return fmt.Errorf("credential secret reference is empty in forProvider spec")
-}
-
-func (s *Service) Update(ctx context.Context, entraApp appregistration.EntraAppRegistration) error {
-
-	if entraApp.Spec.ForProvider == nil {
-		return fmt.Errorf("forProvider spec is nil")
-	}
-
-	secretRef := client.SecretRef{
-		Name:      entraApp.Spec.ForProvider.CredentialSecretRef,
-		Namespace: entraApp.Namespace,
-	}
-
-	if entraApp.Spec.ForProvider.CredentialSecretRef != "" {
-		sdk, err := s.factory.ForClientSecret(ctx, secretRef)
-		if err != nil {
-			return err
-		}
-
-		graphClient := client.NewGraphClient(sdk)
-		err = graphClient.AppRegistration.Update(ctx, entraApp)
+	graphClient, err := s.getGraphClient(ctx, entraApp)
+	if err != nil {
 		return err
 	}
 
-	return fmt.Errorf("credential secret reference is empty in forProvider spec")
+	return graphClient.AppRegistration.Delete(ctx, appID)
+}
+
+type servicePrincipalCreateResponse struct {
+	ServicePrincipalID string
+}
+
+type appRegistrationResponse struct {
+	AppClientID string
+	AppObjectID string
+}
+
+func (s *Service) Update(ctx context.Context, entraApp appregistration.EntraAppRegistration) error {
+	graphClient, err := s.getGraphClient(ctx, entraApp)
+	if err != nil {
+		return err
+	}
+
+	return graphClient.AppRegistration.Update(ctx, entraApp)
 }

@@ -64,6 +64,9 @@ type EntraAppRegistrationSpec struct {
 	// +kubebuilder:validation:Enum=None;SecurityGroup;All
 	// +kubebuilder:default=None
 	GroupMembershipClaims string `json:"groupMembershipClaims,omitempty"`
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:default=false
+	EnableServicePrincipal *bool `json:"enableServicePrincipal,omitempty"`
 }
 
 type AppRegCredConfig struct {

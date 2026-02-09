@@ -41,6 +41,9 @@ spec:
             properties:
               description:
                 type: string
+              enableServicePrincipal:
+                default: false
+                type: boolean
               forProvider:
                 properties:
                   credentialSecretRef:
