@@ -81,26 +81,45 @@ func (r *EntraAppRegistrationReconciler) Reconcile(ctx context.Context, req ctrl
 	return ctrl.Result{RequeueAfter: defaultRequeueDuration}, nil
 }
 
-// ensure service principal
-func (r *EntraAppRegistrationReconciler) ensureServicePrincipal(ctx context.Context, entraAppReg *entragov.EntraAppRegistration) error {
-	// logger := log.FromContext(ctx)
-
-	// _, err := r.SPService.Update(ctx, *entraAppReg)
-	// if err != nil {
-	// 	logger.Error(err, "Failed to ensure service principal for app registration", "appName", entraAppReg.Name)
-	// 	return err
-	// }
-
-	// logger.Info("Service principal ensured successfully for app registration", "appName", entraAppReg.Name)
-	return nil
-}
-
 // SetupWithManager sets up the controller with the Manager.
 func (r *EntraAppRegistrationReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&entragov.EntraAppRegistration{}).
 		Complete(r)
 }
+
+// ensure service principal
+func (r *EntraAppRegistrationReconciler) ensureServicePrincipal(ctx context.Context, entraAppReg *entragov.EntraAppRegistration) error {
+	logger := log.FromContext(ctx)
+
+	if !entraAppReg.Spec.EnableServicePrincipal {
+		logger.Info("Service principal creation is disabled for this app registration. Skipping service principal creation.", "appName", entraAppReg.Name)
+		return nil
+	}
+
+	if entraAppReg.Status.ServicePrincipalID != "" {
+		logger.Info("Service principal already exists for this app registration. Skipping service principal creation.", "appName", entraAppReg.Name)
+		return nil
+	}
+
+	spId, err := r.SPService.Create(ctx, *entraAppReg)
+	if err != nil {
+		logger.Error(err, "Failed to create service principal for app registration", "appName", entraAppReg.Name)
+		return err
+	}
+
+	entraAppReg.Status.ServicePrincipalID = spId
+
+	if err := r.Status().Update(ctx, entraAppReg); err != nil {
+		logger.Error(err, "Failed to update EntraAppRegistration status with service principal ID", "appName", entraAppReg.Name)
+		return err
+	}
+
+	logger.Info("Service principal created successfully for app registration", "appName", entraAppReg.Name, "servicePrincipalID", spId)
+	return nil
+}
+
+
 
 func (r *EntraAppRegistrationReconciler) createAppRegistration(ctx context.Context, entraAppReg *entragov.EntraAppRegistration) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
@@ -159,16 +178,23 @@ func (r *EntraAppRegistrationReconciler) deleteAppRegistration(ctx context.Conte
 }
 
 func (r *EntraAppRegistrationReconciler) updateAppRegistration(ctx context.Context, entraAppReg *entragov.EntraAppRegistration) error {
-	// Placeholder for future attribute reconciliation logic
 	logger := log.FromContext(ctx)
 
-	logger.Info("reconiling EntraAppRegistration", "appName", entraAppReg.Name)
+	// if entraAppReg.Status.ObservedGeneration >= entraAppReg.Generation {
+	// 	return nil
+	// }
 
-	err := r.AppService.Update(ctx, *entraAppReg)
+	logger.Info("reconciling app registration drift", "appName", entraAppReg.Name, "observedGeneration", entraAppReg.Status.ObservedGeneration, "generation", entraAppReg.Generation)
 
+	updated, err := r.AppService.GetAndPatch(ctx, *entraAppReg)
 	if err != nil {
 		logger.Error(err, "Failed to update app registration in Entra", "appName", entraAppReg.Name)
 		return err
+	}
+	if updated {
+		logger.Info("app registration patched in Entra", "appName", entraAppReg.Name)
+	} else {
+		logger.Info("app registration already in sync", "appName", entraAppReg.Name)
 	}
 
 	entraAppReg.Status.Phase = "Available"
@@ -179,10 +205,5 @@ func (r *EntraAppRegistrationReconciler) updateAppRegistration(ctx context.Conte
 		return err
 	}
 
-	// TODO: Implement attribute reconciliation logic here. This may include:
-	// upsert : Create a new application if it doesn't exist
-	// upsert : Update an existing application
-	// DOC: https://learn.microsoft.com/en-us/graph/api/application-upsert?view=graph-rest-1.0&tabs=http#examples
-	// return ctrl.Result{RequeueAfter: defaultRequeueDuration}, nil
 	return nil
 }

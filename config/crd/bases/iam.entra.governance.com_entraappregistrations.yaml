@@ -41,6 +41,9 @@ spec:
             properties:
               description:
                 type: string
+              disableVisibilityForGuests:
+                default: true
+                type: boolean
               enableServicePrincipal:
                 default: false
                 type: boolean
@@ -166,6 +169,10 @@ spec:
                 type: integer
               phase:
                 description: Phase represents the current phase of the EntraAppRegistration.
+                type: string
+              servicePrincipalID:
+                description: ServicePrincipalID is the ID of the created Service Principal
+                  in Entra ID corresponding to the App Registration
                 type: string
             type: object
         type: object

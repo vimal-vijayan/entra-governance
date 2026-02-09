@@ -14,11 +14,11 @@ spec:
     - "owner: vimal vijayan"
     - "description: sample app registration created by Entra Governance Operator"
   enableServicePrincipal: true
+  disableVisibilityForGuests: true
   # signInAudience: AzureADMyOrg
   # allowImplicitFlow: true
   # oauth2AllowIdTokenImplicitFlow: true
   # appRoleAssignmentRequired: false
-  # disableVisibilityForGuests: true
   # owners:
   #   - type: User
   #     id: 93ae7387-40a8-4f68-93d0-bba960155bd8 # user

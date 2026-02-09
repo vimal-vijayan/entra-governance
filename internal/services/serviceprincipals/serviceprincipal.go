@@ -6,6 +6,7 @@ import (
 
 	appregistration "github.com/vimal-vijayan/entra-governance/api/v1alpha1"
 	"github.com/vimal-vijayan/entra-governance/internal/client"
+	"github.com/vimal-vijayan/entra-governance/internal/graph/serviceprincipal"
 )
 
 type Service struct {
@@ -16,10 +17,13 @@ func NewService(factory *client.ClientFactory) *Service {
 	return &Service{factory: factory}
 }
 
-func (s *Service) Create(ctx context.Context, entraApp appregistration.EntraAppRegistration) (string, string, error) {
-
+func (s *Service) getGraphClient(ctx context.Context, entraApp appregistration.EntraAppRegistration) (*client.GraphClient, error) {
 	if entraApp.Spec.ForProvider == nil {
-		return "", "", fmt.Errorf("forProvider spec is nil")
+		return nil, fmt.Errorf("forProvider spec is nil")
+	}
+
+	if entraApp.Spec.ForProvider.CredentialSecretRef == "" {
+		return nil, fmt.Errorf("credential secret reference is empty in forProvider spec")
 	}
 
 	secretRef := client.SecretRef{
@@ -27,50 +31,41 @@ func (s *Service) Create(ctx context.Context, entraApp appregistration.EntraAppR
 		Namespace: entraApp.Namespace,
 	}
 
-	if entraApp.Spec.ForProvider.CredentialSecretRef != "" {
-		sdk, err := s.factory.ForClientSecret(ctx, secretRef)
-		if err != nil {
-			return "", "", err
-		}
-
-		graphClient := client.NewGraphClient(sdk)
-		// response, err := graphClient.CreateEntraApplication(ctx, entraApp.Spec)
-		response, err := graphClient.AppRegistration.Create(ctx, entraApp.Spec)
-		if err != nil {
-			return "", "", err
-		}
-		return response.AppClientID, response.AppObjectID, nil
+	sdk, err := s.factory.ForClientSecret(ctx, secretRef)
+	if err != nil {
+		return nil, err
 	}
 
-	return "", "", fmt.Errorf("credential secret reference is empty in forProvider spec")
+	return client.NewGraphClient(sdk), nil
+}
+
+func (s *Service) Create(ctx context.Context, entraApp appregistration.EntraAppRegistration) (string, error) {
+
+	graphClient, err := s.getGraphClient(ctx, entraApp)
+	if err != nil {
+		return "", err
+	}
+
+	resp, err := graphClient.ServicePrincipals.Create(ctx, serviceprincipal.CreateRequest{
+		DisplayName:                entraApp.Spec.Name,
+		AppID:                      entraApp.Status.AppRegistrationID,
+		DisableVisibilityForGuests: entraApp.Spec.DisableVisibilityForGuests,
+	})
+
+	if err != nil {
+		return "", err
+	}
+
+	return resp.ServicePrincipalID, nil
 }
 
 func (s *Service) Delete(ctx context.Context, appID string, entraApp appregistration.EntraAppRegistration) error {
-
-	if entraApp.Spec.ForProvider == nil {
-		return fmt.Errorf("forProvider spec is nil")
+	graphClient, err := s.getGraphClient(ctx, entraApp)
+	if err != nil {
+		return err
 	}
 
-	secretRef := client.SecretRef{
-		Name:      entraApp.Spec.ForProvider.CredentialSecretRef,
-		Namespace: entraApp.Namespace,
-	}
-
-	if entraApp.Spec.ForProvider.CredentialSecretRef != "" {
-		sdk, err := s.factory.ForClientSecret(ctx, secretRef)
-		if err != nil {
-			return err
-		}
-
-		graphClient := client.NewGraphClient(sdk)
-		return graphClient.AppRegistration.Delete(ctx, appID)
-	}
-
-	return fmt.Errorf("credential secret reference is empty in forProvider spec")
-}
-
-type servicePrincipalCreateResponse struct {
-	ServicePrincipalID string
+	return graphClient.AppRegistration.Delete(ctx, appID)
 }
 
 type appRegistrationResponse struct {
@@ -79,28 +74,15 @@ type appRegistrationResponse struct {
 }
 
 func (s *Service) Update(ctx context.Context, entraApp appregistration.EntraAppRegistration) (*appRegistrationResponse, error) {
-
-	if entraApp.Spec.ForProvider == nil {
-		return nil, fmt.Errorf("forProvider spec is nil")
-	}
-
-	secretRef := client.SecretRef{
-		Name:      entraApp.Spec.ForProvider.CredentialSecretRef,
-		Namespace: entraApp.Namespace,
-	}
-
-	if entraApp.Spec.ForProvider.CredentialSecretRef == "" {
-		return nil, fmt.Errorf("credential secret reference is empty in forProvider spec")
-	}
-
-	sdk, err := s.factory.ForClientSecret(ctx, secretRef)
+	graphClient, err := s.getGraphClient(ctx, entraApp)
 	if err != nil {
 		return nil, err
 	}
 
-	graphClient := client.NewGraphClient(sdk)
-
 	err = graphClient.ServicePrincipals.Update(ctx, "objectid")
+	if err != nil {
+		return nil, err
+	}
 
 	// ensure tags
 	if err = s.upsertTags(ctx, entraApp); err != nil {

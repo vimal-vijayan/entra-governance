@@ -4,14 +4,17 @@ import (
 	"context"
 	"fmt"
 
-	abstractions "github.com/microsoft/kiota-abstractions-go"
 	msgraphsdk "github.com/microsoftgraph/msgraph-sdk-go"
 	graphmodels "github.com/microsoftgraph/msgraph-sdk-go/models"
-	graphserviceprincipalswithappid "github.com/microsoftgraph/msgraph-sdk-go/serviceprincipalswithappid"
-	appregistration "github.com/vimal-vijayan/entra-governance/api/v1alpha1"
 
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
+
+type CreateRequest struct {
+	DisplayName                string
+	AppID                      string
+	DisableVisibilityForGuests bool
+}
 
 type Service struct {
 	sdk *msgraphsdk.GraphServiceClient
@@ -30,7 +33,7 @@ type ServicePrincipalCreateResponse struct {
 
 type API interface {
 	Get(ctx context.Context, appObjectID string) (*ServicePrincipalGetResponse, error)
-	Create(ctx context.Context, app appregistration.EntraAppRegistration) (*ServicePrincipalCreateResponse, error)
+	Create(ctx context.Context, req CreateRequest) (*ServicePrincipalCreateResponse, error)
 	Delete(ctx context.Context, appObjectID string) error
 	Update(ctx context.Context, appObjectID string) error
 	Upsert(ctx context.Context, appObjectID string) (*ServicePrincipalGetResponse, error)
@@ -40,40 +43,37 @@ func NewAPI(sdk *msgraphsdk.GraphServiceClient) API {
 	return &Service{sdk: sdk}
 }
 
-func (s *Service) Create(ctx context.Context, app appregistration.EntraAppRegistration) (*ServicePrincipalCreateResponse, error) {
+func (s *Service) Create(ctx context.Context, req CreateRequest) (*ServicePrincipalCreateResponse, error) {
 	logger := log.FromContext(ctx)
 
-	headers := abstractions.NewRequestHeaders()
-	headers.Add("Prefer", "create-if-missing")
-	configuration := &graphserviceprincipalswithappid.ServicePrincipalsWithAppIdRequestBuilderPatchRequestConfiguration{
-		Headers: headers,
-	}
-
 	requestBody := graphmodels.NewServicePrincipal()
-	displayName := app.Spec.Name
+	appId := req.AppID
+	displayName := req.DisplayName
 	requestBody.SetDisplayName(&displayName)
-	requestBody.SetTags([]string{"HideApp"})
-	appId := app.Status.AppRegistrationID
-	response, err := s.sdk.ServicePrincipalsWithAppId(&appId).Patch(ctx, requestBody, configuration)
+	if req.DisableVisibilityForGuests {
+		requestBody.SetTags([]string{"HideApp"})
+	}
+	requestBody.SetAppId(&appId)
+	response, err := s.sdk.ServicePrincipals().Post(ctx, requestBody, nil)
 
 	if err != nil {
-		logger.Error(err, "failed to create or update service principal", "applicationID", app.Status.AppRegistrationID)
+		logger.Error(err, "failed to create service principal", "applicationID", appId)
 		return nil, err
 	}
 
 	// Check if response or ID is nil before dereferencing
 	if response == nil {
-		logger.Error(nil, "service principal response is nil", "applicationID", app.Status.AppRegistrationID)
+		logger.Error(nil, "service principal response is nil", "applicationID", appId)
 		return nil, fmt.Errorf("service principal response is nil")
 	}
 
 	servicePrincipalID := response.GetId()
 	if servicePrincipalID == nil {
-		logger.Error(nil, "service principal ID is nil", "applicationID", app.Status.AppRegistrationID)
+		logger.Error(nil, "service principal ID is nil", "applicationID", appId)
 		return nil, fmt.Errorf("service principal ID is nil in response")
 	}
 
-	logger.Info("service principal created or updated successfully", "applicationID", app.Status.AppRegistrationID, "servicePrincipalID", *servicePrincipalID)
+	logger.Info("service principal created successfully", "applicationID", appId, "servicePrincipalID", *servicePrincipalID)
 
 	return &ServicePrincipalCreateResponse{
 		ServicePrincipalID: *servicePrincipalID,

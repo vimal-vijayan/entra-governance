@@ -66,7 +66,10 @@ type EntraAppRegistrationSpec struct {
 	GroupMembershipClaims string `json:"groupMembershipClaims,omitempty"`
 	// +kubebuilder:validation:Optional
 	// +kubebuilder:default=false
-	EnableServicePrincipal *bool `json:"enableServicePrincipal,omitempty"`
+	EnableServicePrincipal bool `json:"enableServicePrincipal,omitempty"`
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:default=true
+	DisableVisibilityForGuests bool `json:"disableVisibilityForGuests,omitempty"`
 }
 
 type AppRegCredConfig struct {
@@ -91,6 +94,8 @@ type EntraAppRegistrationStatus struct {
 	AppRegistrationID string `json:"appRegistrationID,omitempty"`
 	// AppRegistrationObjID is the Object ID of the created App Registration in Entra ID
 	AppRegistrationObjID string `json:"appRegistrationObjID,omitempty"`
+	// ServicePrincipalID is the ID of the created Service Principal in Entra ID corresponding to the App Registration
+	ServicePrincipalID string `json:"servicePrincipalID,omitempty"`
 }
 
 // +kubebuilder:object:root=true
