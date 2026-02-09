@@ -14,7 +14,26 @@ spec:
     singular: entraappregistration
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - additionalPrinterColumns:
+    - jsonPath: .status.appRegistrationName
+      name: DisplayName
+      type: string
+    - jsonPath: .status.appRegistrationID
+      name: ClientID
+      type: string
+    - jsonPath: .status.appRegistrationObjID
+      name: ObjectID
+      type: string
+    - jsonPath: .status.phase
+      name: Phase
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    - jsonPath: .status.lastRun
+      name: LastRun
+      type: date
+    name: v1alpha1
     schema:
       openAPIV3Schema:
         description: EntraAppRegistration is the Schema for the entraappregistrations

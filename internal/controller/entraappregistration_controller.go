@@ -119,8 +119,6 @@ func (r *EntraAppRegistrationReconciler) ensureServicePrincipal(ctx context.Cont
 	return nil
 }
 
-
-
 func (r *EntraAppRegistrationReconciler) createAppRegistration(ctx context.Context, entraAppReg *entragov.EntraAppRegistration) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
 

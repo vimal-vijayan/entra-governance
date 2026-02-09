@@ -26,6 +26,12 @@ import (
 // EntraAppRegistrationSpec defines the desired state of EntraAppRegistration
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
+// +kubebuilder:printcolumn:name="DisplayName",type="string",JSONPath=".status.appRegistrationName"
+// +kubebuilder:printcolumn:name="ClientID",type="string",JSONPath=".status.appRegistrationID"
+// +kubebuilder:printcolumn:name="ObjectID",type="string",JSONPath=".status.appRegistrationObjID"
+// +kubebuilder:printcolumn:name="Phase",type="string",JSONPath=".status.phase"
+// +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
+// +kubebuilder:printcolumn:name="LastRun",type="date",JSONPath=".status.lastRun"
 
 // EntraAppRegistration is the Schema for the entraappregistrations API
 type EntraAppRegistration struct {

@@ -134,7 +134,7 @@ func buildPatchRequest(current *graphappregistration.Application, desired desire
 	request := graphappregistration.PatchRequest{
 		ObjectID: desired.ObjectID,
 	}
-	
+
 	hasChanges := false
 
 	if current.DisplayName != desired.DisplayName {
