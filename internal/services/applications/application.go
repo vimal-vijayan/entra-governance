@@ -77,3 +77,56 @@ func (s *Service) Update(ctx context.Context, entraApp appregistration.EntraAppR
 
 	return graphClient.AppRegistration.Update(ctx, entraApp)
 }
+
+type desiredApplication struct {
+	AppId           string
+	AppObjectID     string
+	Tags            []string
+	IdentifierURI   []string
+	WebRedirectURIs []string
+}
+
+func (s *Service) GetAndPatch(ctx context.Context, entraApp appregistration.EntraAppRegistration) (*desiredApplication, error) {
+	graphClient, err := s.getGraphClient(ctx, entraApp)
+	
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := graphClient.AppRegistration.Get(ctx, entraApp.Status.AppRegistrationObjID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if entraApp.Spec.Tags != nil {
+		tags := compareTags(resp.GetTags(), entraApp.Spec.Tags)
+		resp.SetTags(tags)
+	}
+	
+
+	return &desiredApplication{
+		AppId:           *resp.GetAppId(),
+		AppObjectID:     *resp.GetId(),
+		Tags:            resp.GetTags(),
+		IdentifierURI:   resp.GetIdentifierUris(),
+		WebRedirectURIs: resp.GetWeb().GetRedirectUris(),
+	}, nil
+
+}
+
+func compareTags(existingTags, desiredTags []string) []string {
+	for _, existingTag := range existingTags {
+		found := false
+		for _, desiredTag := range desiredTags {
+			if existingTag == desiredTag {
+				found = true
+				break
+			}
+		}
+		if !found {
+			desiredTags = append(desiredTags, existingTag)
+		}
+	}
+	return desiredTags
+}
