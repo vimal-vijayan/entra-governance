@@ -58,6 +58,71 @@ spec:
             type: object
           spec:
             properties:
+              api:
+                description: Platform-specific settings
+                properties:
+                  acceptMappedClaims:
+                    default: false
+                    type: boolean
+                  appRoleAllowedMemberTypes:
+                    items:
+                      type: string
+                    type: array
+                  knownClientApplications:
+                    items:
+                      type: string
+                    type: array
+                  oauth2PermissionScopes:
+                    items:
+                      description: PermissionScope represents a delegated permission
+                        exposed by a web API
+                      properties:
+                        adminConsentDescription:
+                          type: string
+                        adminConsentDisplayName:
+                          type: string
+                        id:
+                          type: string
+                        isEnabled:
+                          type: boolean
+                        type:
+                          enum:
+                          - User
+                          - Admin
+                          type: string
+                        userConsentDescription:
+                          type: string
+                        userConsentDisplayName:
+                          type: string
+                        value:
+                          type: string
+                      required:
+                      - id
+                      - isEnabled
+                      type: object
+                    type: array
+                  preAuthorizedApplications:
+                    items:
+                      description: PreAuthorizedApplication lists applications pre-authorized
+                        with specified permissions
+                      properties:
+                        appId:
+                          type: string
+                        delegatedPermissionIds:
+                          items:
+                            type: string
+                          type: array
+                      required:
+                      - appId
+                      - delegatedPermissionIds
+                      type: object
+                    type: array
+                  requestedAccessTokenVersion:
+                    enum:
+                    - 1
+                    - 2
+                    type: integer
+                type: object
               description:
                 type: string
               forProvider:
@@ -74,18 +139,94 @@ spec:
                 - SecurityGroup
                 - All
                 type: string
+              identifierUris:
+                items:
+                  type: string
+                type: array
               isDeviceOnlyAuthSupported:
                 type: boolean
               isFallbackPublicClient:
+                description: authentication settings
                 type: boolean
               name:
                 maxLength: 120
                 minLength: 1
                 pattern: ^[^<>%&:\\?\/\*]+$
                 type: string
-              publicClient:
+              notes:
+                type: string
+              oauth2RequirePostResponse:
+                default: false
                 type: boolean
+              optionalClaims:
+                description: token configuration
+                properties:
+                  accessToken:
+                    items:
+                      properties:
+                        additionalProperties:
+                          items:
+                            type: string
+                          type: array
+                        essential:
+                          default: false
+                          type: boolean
+                        name:
+                          type: string
+                        source:
+                          type: string
+                      required:
+                      - name
+                      type: object
+                    type: array
+                  idToken:
+                    items:
+                      properties:
+                        additionalProperties:
+                          items:
+                            type: string
+                          type: array
+                        essential:
+                          default: false
+                          type: boolean
+                        name:
+                          type: string
+                        source:
+                          type: string
+                      required:
+                      - name
+                      type: object
+                    type: array
+                  saml2Token:
+                    items:
+                      properties:
+                        additionalProperties:
+                          items:
+                            type: string
+                          type: array
+                        essential:
+                          default: false
+                          type: boolean
+                        name:
+                          type: string
+                        source:
+                          type: string
+                      required:
+                      - name
+                      type: object
+                    type: array
+                type: object
+              publicClient:
+                description: PublicClientApplication specifies settings for installed
+                  clients (mobile/desktop)
+                properties:
+                  redirectUris:
+                    items:
+                      type: string
+                    type: array
+                type: object
               samlMetadataUrl:
+                description: saml configuration
                 type: string
               servicePrincipal:
                 properties:
@@ -101,16 +242,46 @@ spec:
                 type: object
               signInAudience:
                 default: AzureADMyOrg
+                description: sign-in configuration
                 enum:
                 - AzureADMyOrg
                 - AzureADMultipleOrgs
                 - AzureADandPersonalMicrosoftAccount
                 - PersonalMicrosoftAccount
                 type: string
+              spa:
+                description: SPAApplication specifies settings for a single-page application
+                properties:
+                  redirectUris:
+                    items:
+                      type: string
+                    type: array
+                type: object
               tags:
                 items:
                   type: string
                 type: array
+              web:
+                description: WebApplication specifies settings for a web application
+                properties:
+                  homePageUrl:
+                    type: string
+                  implicitGrantSettings:
+                    description: ImplicitGrantSettings specifies whether this web
+                      app can request tokens using OAuth 2.0 implicit flow
+                    properties:
+                      enableAccessTokenIssuance:
+                        type: boolean
+                      enableIdTokenIssuance:
+                        type: boolean
+                    type: object
+                  logoutUrl:
+                    type: string
+                  redirectUris:
+                    items:
+                      type: string
+                    type: array
+                type: object
             required:
             - forProvider
             - name
@@ -194,6 +365,10 @@ spec:
                 type: integer
               phase:
                 description: Phase represents the current phase of the EntraAppRegistration.
+                type: string
+              servicePrincipalEnabled:
+                description: ServicePrincipalEnabled indicates whether the service
+                  principal was successfully created and is enabled
                 type: string
               servicePrincipalID:
                 description: ServicePrincipalID is the ID of the created Service Principal

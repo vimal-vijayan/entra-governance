@@ -47,14 +47,17 @@ func (s *Service) Create(ctx context.Context, entraApp entrav1alpha1.EntraAppReg
 	}
 
 	response, err := graphClient.AppRegistration.Create(ctx, graphappregistration.CreateRequest{
-		DisplayName:               entraApp.Spec.Name,
-		Description:               entraApp.Spec.Description,
-		Tags:                      append([]string(nil), entraApp.Spec.Tags...),
-		SignInAudience:            entraApp.Spec.SignInAudience,
-		SamlMetadataURL:           entraApp.Spec.SamlMetadataUrl,
-		IsFallbackPublicClient:    entraApp.Spec.IsFallbackPublicClient,
-		IsDeviceOnlyAuthSupported: entraApp.Spec.IsDeviceOnlyAuthSupported,
-		GroupMembershipClaims:     entraApp.Spec.GroupMembershipClaims,
+		DisplayName:                entraApp.Spec.Name,
+		Description:                &entraApp.Spec.Description,
+		Tags:                       append([]string(nil), entraApp.Spec.Tags...),
+		Notes:                      &entraApp.Spec.Notes,
+		SignInAudience:             &entraApp.Spec.SignInAudience,
+		IdentifierURIs:             append([]string(nil), entraApp.Spec.IdentifierUris...),
+		SamlMetadataURL:            &entraApp.Spec.SamlMetadataUrl,
+		IsFallbackPublicClient:     &entraApp.Spec.IsFallbackPublicClient,
+		IsDeviceOnlyAuthSupported:  &entraApp.Spec.IsDeviceOnlyAuthSupported,
+		GroupMembershipClaims:      &entraApp.Spec.GroupMembershipClaims,
+		OAuth2RequiredPostResponse: &entraApp.Spec.OAuth2RequiredPostResponse,
 	})
 	if err != nil {
 		return "", "", err

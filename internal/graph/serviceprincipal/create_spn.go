@@ -32,13 +32,13 @@ type CreateRequest struct {
 	AppOwnerOrganizationId string
 
 	// Configuration
-	AppRoleAssignmentRequired            bool
-	SignInAudience                       string
-	ServicePrincipalType                 string
-	PreferredSingleSignOnMode            string
-	PreferredTokenSigningKeyThumbprint   string
-	Notes                                string
-	NotificationEmailAddresses           []string
+	AppRoleAssignmentRequired          bool
+	SignInAudience                     string
+	ServicePrincipalType               string
+	PreferredSingleSignOnMode          string
+	PreferredTokenSigningKeyThumbprint string
+	Notes                              string
+	NotificationEmailAddresses         []string
 }
 
 func (s *Service) Create(ctx context.Context, req CreateRequest) (*ServicePrincipalCreateResponse, error) {

@@ -13,8 +13,9 @@ spec:
   tags:
     - "owner: vimal vijayan"
     - "description: sample app registration created by Entra Governance Operator"
+  notes: "This is a sample application registration created by Entra Governance Operator. It is used for testing and demonstration purposes."
   servicePrincipal:
-    enabled: true
+    enabled: false
     disableVisibilityForGuests: true
   # signInAudience: AzureADMyOrg
   # allowImplicitFlow: true

@@ -5,6 +5,7 @@ import (
 
 	msgraphsdk "github.com/microsoftgraph/msgraph-sdk-go"
 )
+
 type Service struct {
 	sdk *msgraphsdk.GraphServiceClient
 }
