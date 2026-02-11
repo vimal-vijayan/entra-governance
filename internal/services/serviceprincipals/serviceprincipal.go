@@ -68,8 +68,7 @@ func (s *Service) Delete(ctx context.Context, appID string, entraApp appregistra
 	if err != nil {
 		return err
 	}
-
-	return graphClient.AppRegistration.Delete(ctx, appID)
+	return graphClient.ServicePrincipals.Delete(ctx, appID)
 }
 
 type appRegistrationResponse struct {

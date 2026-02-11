@@ -93,6 +93,20 @@ func (r *EntraAppRegistrationReconciler) ensureServicePrincipal(ctx context.Cont
 	logger := log.FromContext(ctx)
 
 	if !entraAppReg.Spec.ServicePrincipal.Enabled {
+		if entraAppReg.Status.ServicePrincipal == "Enabled" {
+			logger.Info("Service principal exists but is now disabled in spec. Deleting service principal.", "appName", entraAppReg.Name)
+			if err := r.SPService.Delete(ctx, entraAppReg.Status.ServicePrincipalID, *entraAppReg); err != nil {
+				logger.Error(err, "Failed to delete service principal for app registration", "appName", entraAppReg.Name)
+				return err
+			}
+			entraAppReg.Status.ServicePrincipalID = ""
+			entraAppReg.Status.ServicePrincipal = "Disabled"
+			if err := r.Status().Update(ctx, entraAppReg); err != nil {
+				logger.Error(err, "Failed to update EntraAppRegistration status after deleting service principal", "appName", entraAppReg.Name)
+				return err
+			}
+			logger.Info("Service principal deleted successfully for app registration", "appName", entraAppReg.Name)
+		}
 		logger.Info("Service principal creation is disabled for this app registration. Skipping service principal creation.", "appName", entraAppReg.Name)
 		return nil
 	}
@@ -109,6 +123,7 @@ func (r *EntraAppRegistrationReconciler) ensureServicePrincipal(ctx context.Cont
 	}
 
 	entraAppReg.Status.ServicePrincipalID = spId
+	entraAppReg.Status.ServicePrincipal = "Enabled"
 
 	if err := r.Status().Update(ctx, entraAppReg); err != nil {
 		logger.Error(err, "Failed to update EntraAppRegistration status with service principal ID", "appName", entraAppReg.Name)

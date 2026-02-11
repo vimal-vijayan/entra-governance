@@ -110,6 +110,8 @@ type EntraAppRegistrationStatus struct {
 	AppRegistrationObjID string `json:"appRegistrationObjID,omitempty"`
 	// ServicePrincipalID is the ID of the created Service Principal in Entra ID corresponding to the App Registration
 	ServicePrincipalID string `json:"servicePrincipalID,omitempty"`
+	// ServicePrincipalEnabled indicates whether the service principal was successfully created and is enabled
+	ServicePrincipal string `json:"servicePrincipalEnabled,omitempty"`
 }
 
 // +kubebuilder:object:root=true

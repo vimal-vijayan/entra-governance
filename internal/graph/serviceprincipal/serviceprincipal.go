@@ -5,14 +5,6 @@ import (
 
 	msgraphsdk "github.com/microsoftgraph/msgraph-sdk-go"
 )
-
-type CreateRequest struct {
-	DisplayName                string
-	AppID                      string
-	DisableVisibilityForGuests bool
-	AccountEnabled             bool
-}
-
 type Service struct {
 	sdk *msgraphsdk.GraphServiceClient
 }
@@ -45,6 +37,9 @@ func (s *Service) Get(ctx context.Context, appObjectID string) (*ServicePrincipa
 }
 
 func (s *Service) Delete(ctx context.Context, appObjectID string) error {
+	if err := s.sdk.ServicePrincipals().ByServicePrincipalId(appObjectID).Delete(ctx, nil); err != nil {
+		return err
+	}
 	return nil
 }
 
