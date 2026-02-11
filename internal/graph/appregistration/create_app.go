@@ -14,11 +14,11 @@ func (s *Service) Create(ctx context.Context, req CreateRequest) (*CreateRespons
 	body.SetDisplayName(&req.DisplayName)
 	body.SetDescription(&req.Description)
 	body.SetTags(req.Tags)
-	body.SetSignInAudience(&req.SignInAudience)
-	body.SetSamlMetadataUrl(&req.SamlMetadataURL)
-	body.SetIsFallbackPublicClient(&req.IsFallbackPublicClient)
-	body.SetIsDeviceOnlyAuthSupported(&req.IsDeviceOnlyAuthSupported)
-	body.SetGroupMembershipClaims(&req.GroupMembershipClaims)
+	body.SetSignInAudience(req.SignInAudience)
+	body.SetSamlMetadataUrl(req.SamlMetadataURL)
+	body.SetIsFallbackPublicClient(req.IsFallbackPublicClient)
+	body.SetIsDeviceOnlyAuthSupported(req.IsDeviceOnlyAuthSupported)
+	body.SetGroupMembershipClaims(req.GroupMembershipClaims)
 
 	app, err := s.sdk.Applications().Post(ctx, body, nil)
 	if err != nil {
