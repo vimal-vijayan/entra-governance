@@ -157,7 +157,8 @@ type EntraAppRegistrationSpec struct {
 	Tags []string `json:"tags,omitempty"`
 	// +kubebuilder:validation:Optional
 	Notes string `json:"notes,omitempty"`
-
+	// +kubebuilder:validation:Optional
+	Owners *[]string `json:"owners,omitempty"`
 	// sign-in configuration
 	// +kubebuilder:validation:Optional
 	// +kubebuilder:validation:Enum=AzureADMyOrg;AzureADMultipleOrgs;AzureADandPersonalMicrosoftAccount;PersonalMicrosoftAccount

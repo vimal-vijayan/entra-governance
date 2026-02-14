@@ -216,6 +216,10 @@ spec:
                       type: object
                     type: array
                 type: object
+              owners:
+                items:
+                  type: string
+                type: array
               publicClient:
                 description: PublicClientApplication specifies settings for installed
                   clients (mobile/desktop)

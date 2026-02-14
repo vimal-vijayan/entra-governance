@@ -148,6 +148,7 @@ type CreateRequest struct {
 	Description *string  `json:"description,omitempty"`
 	Tags        []string `json:"tags,omitempty"`
 	Notes       *string  `json:"notes,omitempty"`
+	Owners      []string `json:"owners,omitempty"`
 
 	// Sign-in configuration
 	SignInAudience *string  `json:"signInAudience,omitempty"`

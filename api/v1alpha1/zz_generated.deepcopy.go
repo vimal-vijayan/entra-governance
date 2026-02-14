@@ -161,6 +161,15 @@ func (in *EntraAppRegistrationSpec) DeepCopyInto(out *EntraAppRegistrationSpec) 
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
+	if in.Owners != nil {
+		in, out := &in.Owners, &out.Owners
+		*out = new([]string)
+		if **in != nil {
+			in, out := *in, *out
+			*out = make([]string, len(*in))
+			copy(*out, *in)
+		}
+	}
 	if in.IdentifierUris != nil {
 		in, out := &in.IdentifierUris, &out.IdentifierUris
 		*out = make([]string, len(*in))

@@ -14,6 +14,9 @@ spec:
     - "owner: vimal vijayan"
     - "description: sample app registration created by Entra Governance Operator"
   notes: "This is a sample application registration created by Entra Governance Operator. It is used for testing and demonstration purposes."
+  owners:
+      - 6ab28387-2323-4e1b-8d8a-e1c0a579c985 # Vick
+      - 81c383e4-6d2f-43a1-8304-6a669a1814dd # Service Principal
   servicePrincipal:
     enabled: false
     disableVisibilityForGuests: true

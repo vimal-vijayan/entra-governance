@@ -24,7 +24,7 @@ func (s *Service) Create(ctx context.Context, req CreateRequest) (*CreateRespons
 	body.SetIsDeviceOnlyAuthSupported(req.IsDeviceOnlyAuthSupported)
 	// FIXME: setting OAuth2RequiredPostResponse is causing creation issues, need to investigate further ( unknown error )
 	// body.SetOauth2RequirePostResponse(req.OAuth2RequiredPostResponse)
-	
+
 	// TODO: token encryption key ID is expected to be a UUID, Put it in a function
 	// if req.TokenEncryptionKeyID != nil {
 	// 	parsedUUID, err := uuid.Parse(*req.TokenEncryptionKeyID)
@@ -64,6 +64,7 @@ func (s *Service) Create(ctx context.Context, req CreateRequest) (*CreateRespons
 	}
 
 	logger.Info("application created successfully", "applicationName", req.DisplayName, "clientID", appID, "objectID", objectID)
+
 	return &CreateResponse{
 		AppClientID: appID,
 		AppObjectID: objectID,

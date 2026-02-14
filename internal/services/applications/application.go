@@ -42,6 +42,7 @@ func (s *Service) getGraphClient(ctx context.Context, entraApp entrav1alpha1.Ent
 
 func (s *Service) Create(ctx context.Context, entraApp entrav1alpha1.EntraAppRegistration) (string, string, error) {
 	graphClient, err := s.getGraphClient(ctx, entraApp)
+
 	if err != nil {
 		return "", "", err
 	}
@@ -51,6 +52,7 @@ func (s *Service) Create(ctx context.Context, entraApp entrav1alpha1.EntraAppReg
 		Description:                &entraApp.Spec.Description,
 		Tags:                       append([]string(nil), entraApp.Spec.Tags...),
 		Notes:                      &entraApp.Spec.Notes,
+		Owners:                     append([]string(nil), (*entraApp.Spec.Owners)...),
 		SignInAudience:             &entraApp.Spec.SignInAudience,
 		IdentifierURIs:             append([]string(nil), entraApp.Spec.IdentifierUris...),
 		SamlMetadataURL:            &entraApp.Spec.SamlMetadataUrl,
@@ -90,6 +92,7 @@ type desiredApplication struct {
 	IsFallbackPublicClient    bool
 	IsDeviceOnlyAuthSupported bool
 	GroupMembershipClaims     string
+	Owners                    []string
 }
 
 func (s *Service) GetAndPatch(ctx context.Context, entraApp entrav1alpha1.EntraAppRegistration) (bool, error) {
@@ -119,6 +122,7 @@ func (s *Service) GetAndPatch(ctx context.Context, entraApp entrav1alpha1.EntraA
 		IsFallbackPublicClient:    entraApp.Spec.IsFallbackPublicClient,
 		IsDeviceOnlyAuthSupported: entraApp.Spec.IsDeviceOnlyAuthSupported,
 		GroupMembershipClaims:     entraApp.Spec.GroupMembershipClaims,
+		Owners:                    append([]string(nil), (*entraApp.Spec.Owners)...),
 	}
 
 	patchRequest, hasChanges := buildPatchRequest(resp, desired)
@@ -201,4 +205,14 @@ func equalStringSets(left, right []string) bool {
 	}
 
 	return true
+}
+
+func (s *Service) getOwners(ctx context.Context, appID string, entraApp entrav1alpha1.EntraAppRegistration) ([]string, error) {
+	graphClient, err := s.getGraphClient(ctx, entraApp)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return graphClient.AppRegistration.GetOwners(ctx, appID)
 }
