@@ -24,11 +24,6 @@ spec:
   # allowImplicitFlow: true
   # oauth2AllowIdTokenImplicitFlow: true
   # appRoleAssignmentRequired: false
-  # owners:
-  #   - type: User
-  #     id: 93ae7387-40a8-4f68-93d0-bba960155bd8 # user
-  #   - type: ServicePrincipal
-  #     id: d3b5f5e1-6c4b-4f2e-9f3a-2e5f4c3b2a1d # app registration
   # web:
   #   redirectUris:
   #     - https://myapp.com/auth/callback
