@@ -240,6 +240,12 @@ type EntraAppRegistrationStatus struct {
 	ServicePrincipalID string `json:"servicePrincipalID,omitempty"`
 	// ServicePrincipalEnabled indicates whether the service principal was successfully created and is enabled
 	ServicePrincipal string `json:"servicePrincipalEnabled,omitempty"`
+	// Owners lists the Object IDs of the owners of the App Registration in Entra ID
+	Owners []string `json:"owners,omitempty"`
+	// LastRun indicates the last time the controller attempted to reconcile this resource
+	LastRun metav1.Time `json:"lastRun,omitempty"`
+	// Message provides additional information about the current status or any errors encountered
+	Message string `json:"message,omitempty"`
 }
 
 // +kubebuilder:object:root=true

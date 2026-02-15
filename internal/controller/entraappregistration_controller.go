@@ -27,6 +27,7 @@ import (
 	entragov "github.com/vimal-vijayan/entra-governance/api/v1alpha1"
 	appregistration "github.com/vimal-vijayan/entra-governance/internal/services/applications"
 	serviceprincipal "github.com/vimal-vijayan/entra-governance/internal/services/serviceprincipals"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // EntraAppRegistrationReconciler reconciles a EntraAppRegistration object
@@ -125,7 +126,7 @@ func (r *EntraAppRegistrationReconciler) ensureServicePrincipal(ctx context.Cont
 	entraAppReg.Status.ServicePrincipalID = spId
 	entraAppReg.Status.ServicePrincipal = "Enabled"
 
-	if err := r.Status().Update(ctx, entraAppReg); err != nil {
+	if err := r.updateReconilerStatus(ctx, *entraAppReg); err != nil {
 		logger.Error(err, "Failed to update EntraAppRegistration status with service principal ID", "appName", entraAppReg.Name)
 		return err
 	}
@@ -145,13 +146,13 @@ func (r *EntraAppRegistrationReconciler) createAppRegistration(ctx context.Conte
 
 	entraAppReg.Status.AppRegistrationID = clientId
 	entraAppReg.Status.AppRegistrationObjID = principalId
-	entraAppReg.Status.Phase = "Available"
+	entraAppReg.Status.Phase = "Pending"
 	entraAppReg.Status.AppRegistrationName = entraAppReg.Name
 	entraAppReg.Status.ObservedGeneration = entraAppReg.Generation
 	//TODO: Add conditions and messages in status
 	// entraAppReg.Status.Message = "App registration created successfully in Entra"
 
-	if err := r.Status().Update(ctx, entraAppReg); err != nil {
+	if err := r.updateReconilerStatus(ctx, *entraAppReg); err != nil {
 		logger.Error(err, "Failed to update EntraAppRegistration status after creation", "appName", entraAppReg.Name)
 		return ctrl.Result{RequeueAfter: defaultRequeueDuration}, err
 	}
@@ -210,13 +211,22 @@ func (r *EntraAppRegistrationReconciler) updateAppRegistration(ctx context.Conte
 		logger.Info("app registration already in sync", "appName", entraAppReg.Name)
 	}
 
-	entraAppReg.Status.Phase = "Available"
-	entraAppReg.Status.ObservedGeneration = entraAppReg.Generation
-
-	if err := r.Status().Update(ctx, entraAppReg); err != nil {
-		logger.Error(err, "Failed to update EntraAppRegistration status after creation", "appName", entraAppReg.Name)
-		return err
+	if err := r.AppService.UpdateOwners(ctx, entraAppReg.Status.AppRegistrationObjID, *entraAppReg); err != nil {
+		logger.Error(err, "Failed to update app owners in Entra", "appName", entraAppReg.Name)
+		entraAppReg.Status.Phase = "Warning"
+		entraAppReg.Status.Message = "App registration is in sync with Entra but failed to update owners: " + err.Error()
+		entraAppReg.Status.LastRun = metav1.Now()
+		return r.updateReconilerStatus(ctx, *entraAppReg)
 	}
 
-	return nil
+	entraAppReg.Status.Phase = "Available"
+	entraAppReg.Status.ObservedGeneration = entraAppReg.Generation
+	entraAppReg.Status.Message = "App registration is in sync with Entra"
+	if entraAppReg.Spec.Owners != nil {
+		entraAppReg.Status.Owners = append([]string(nil), (*entraAppReg.Spec.Owners)...)
+	} else {
+		entraAppReg.Status.Owners = nil
+	}
+
+	return r.updateReconilerStatus(ctx, *entraAppReg)
 }

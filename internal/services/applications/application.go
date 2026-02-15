@@ -206,13 +206,3 @@ func equalStringSets(left, right []string) bool {
 
 	return true
 }
-
-func (s *Service) getOwners(ctx context.Context, appID string, entraApp entrav1alpha1.EntraAppRegistration) ([]string, error) {
-	graphClient, err := s.getGraphClient(ctx, entraApp)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return graphClient.AppRegistration.GetOwners(ctx, appID)
-}

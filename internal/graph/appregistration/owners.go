@@ -2,8 +2,10 @@ package appregistration
 
 import (
 	"context"
+	"fmt"
 
 	graphmodels "github.com/microsoftgraph/msgraph-sdk-go/models"
+	"github.com/microsoftgraph/msgraph-sdk-go/models/odataerrors"
 )
 
 func (s *Service) GetAppOwners(ctx context.Context, objectID string) ([]string, error) {
@@ -31,12 +33,15 @@ func (s *Service) AddAppOwners(ctx context.Context, appID string, owners []strin
 		request.SetOdataId(&odataID)
 		err := s.sdk.Applications().ByApplicationId(appID).Owners().Ref().Post(ctx, request, nil)
 		if err != nil {
+			if odataError, ok := err.(*odataerrors.ODataError); ok {
+				fmt.Printf("OData error occurred: %d\n", odataError.GetStatusCode())
+				fmt.Printf("OData error code: %s\n", *odataError.GetErrorEscaped().GetMessage())
+			}
 			return nil, err
 		}
 	}
 	return owners, nil
 }
-
 
 func (s *Service) RemoveAppOwners(ctx context.Context, appID string, owners []string) error {
 	for _, owner := range owners {

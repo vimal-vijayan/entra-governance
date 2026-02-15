@@ -362,11 +362,26 @@ spec:
                   - type
                   type: object
                 type: array
+              lastRun:
+                description: LastRun indicates the last time the controller attempted
+                  to reconcile this resource
+                format: date-time
+                type: string
+              message:
+                description: Message provides additional information about the current
+                  status or any errors encountered
+                type: string
               observedGeneration:
                 description: ObservedGeneration is the latest observed generation
                   of the resource.
                 format: int64
                 type: integer
+              owners:
+                description: Owners lists the Object IDs of the owners of the App
+                  Registration in Entra ID
+                items:
+                  type: string
+                type: array
               phase:
                 description: Phase represents the current phase of the EntraAppRegistration.
                 type: string

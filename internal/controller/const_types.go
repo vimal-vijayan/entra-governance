@@ -4,7 +4,7 @@ import "time"
 
 const (
 	defaultRequeueDuration           = 10 * time.Minute
-	faildStatusUpdateRequeueDuration = 10 * time.Second
+	faildStatusUpdateRequeueDuration = 60 * time.Second
 
 	// Entra group constants
 	entraSecurityGroupFinalizer = "finalizer.entraSecurityGroup.iam.entra.governance.com"
