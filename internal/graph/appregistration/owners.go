@@ -2,7 +2,9 @@ package appregistration
 
 import (
 	"context"
-	"fmt"
+	"strings"
+
+	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	graphmodels "github.com/microsoftgraph/msgraph-sdk-go/models"
 	"github.com/microsoftgraph/msgraph-sdk-go/models/odataerrors"
@@ -27,6 +29,7 @@ func (s *Service) GetAppOwners(ctx context.Context, objectID string) ([]string, 
 }
 
 func (s *Service) AddAppOwners(ctx context.Context, appID string, owners []string) ([]string, error) {
+	logger := log.FromContext(ctx)
 	request := graphmodels.NewReferenceCreate()
 	for _, owner := range owners {
 		odataID := "https://graph.microsoft.com/v1.0/directoryObjects/" + owner
@@ -34,8 +37,13 @@ func (s *Service) AddAppOwners(ctx context.Context, appID string, owners []strin
 		err := s.sdk.Applications().ByApplicationId(appID).Owners().Ref().Post(ctx, request, nil)
 		if err != nil {
 			if odataError, ok := err.(*odataerrors.ODataError); ok {
-				fmt.Printf("OData error occurred: %d\n", odataError.GetStatusCode())
-				fmt.Printf("OData error code: %s\n", *odataError.GetErrorEscaped().GetMessage())
+				logger.Error(err, "failed to add owner to application", "appID", appID, "ownerID", owner)
+				logger.Error(err, "OData error code", "code", *odataError.GetErrorEscaped().GetMessage())
+				// If the object is already added as an owner by IDM. the error will be skipped
+				if odataError.GetErrorEscaped().GetMessage() != nil && strings.Contains(*odataError.GetErrorEscaped().GetMessage(), "already exist") {
+					logger.Info("Owner already exists for the application, skipping addition", "appID", appID, "ownerID", owner)
+					continue
+				}
 			}
 			return nil, err
 		}

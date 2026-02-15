@@ -29,6 +29,14 @@ func (s *Service) UpdateOwners(ctx context.Context, appId string, entraApp entra
 				return err
 			}
 		}
+
+		ownersToRemove := findMissingOwners(managedOwners, owners)
+		if len(ownersToRemove) > 0 {
+			err := graphClient.AppRegistration.RemoveAppOwners(ctx, appId, ownersToRemove)
+			if err != nil {
+				return err
+			}
+		}
 	} else {
 		currentOwners, err := graphClient.AppRegistration.GetAppOwners(ctx, appId)
 		if err != nil {
@@ -37,6 +45,14 @@ func (s *Service) UpdateOwners(ctx context.Context, appId string, entraApp entra
 		ownersToAdd := findMissingOwners(owners, currentOwners)
 		if len(ownersToAdd) > 0 {
 			_, err := graphClient.AppRegistration.AddAppOwners(ctx, appId, ownersToAdd)
+			if err != nil {
+				return err
+			}
+		}
+
+		ownersToRemove := findMissingOwners(managedOwners, owners)
+		if len(ownersToRemove) > 0 {
+			err := graphClient.AppRegistration.RemoveAppOwners(ctx, appId, ownersToRemove)
 			if err != nil {
 				return err
 			}
