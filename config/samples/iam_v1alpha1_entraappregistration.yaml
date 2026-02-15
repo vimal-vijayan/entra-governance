@@ -19,10 +19,18 @@ spec:
       - 93ae7387-40a8-4f68-93d0-bba960155bd8 # sri
       - 81c383e4-6d2f-43a1-8304-6a669a1814dd # service principal
   signInAudience: AzureADMyOrg
+  info:
+    marketingUrl: https://www.contoso.com/app/marketing
   servicePrincipal:
     enabled: false
     disableVisibilityForGuests: true
-  
+  requiredResourceAccess:
+    - resourceAppId: 00000003-0000-0000-c000-000000000000 # Microsoft Graph
+      resourceAccess:
+        - id: e1fe6dd8-ba31-4d61-89e7-88639da4683d # User.Read
+          type: Scope
+        - id: 06da0dbc-49e2-44d2-8310-4f3f2d09b1f0 # Group.Read.All
+          type: Role
   # allowImplicitFlow: true
   # oauth2AllowIdTokenImplicitFlow: true
   # appRoleAssignmentRequired: false

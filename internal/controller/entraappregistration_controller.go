@@ -19,6 +19,7 @@ package controller
 import (
 	"context"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -27,7 +28,6 @@ import (
 	entragov "github.com/vimal-vijayan/entra-governance/api/v1alpha1"
 	appregistration "github.com/vimal-vijayan/entra-governance/internal/services/applications"
 	serviceprincipal "github.com/vimal-vijayan/entra-governance/internal/services/serviceprincipals"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // EntraAppRegistrationReconciler reconciles a EntraAppRegistration object
@@ -222,6 +222,7 @@ func (r *EntraAppRegistrationReconciler) updateAppRegistration(ctx context.Conte
 	entraAppReg.Status.Phase = "Available"
 	entraAppReg.Status.ObservedGeneration = entraAppReg.Generation
 	entraAppReg.Status.Message = "App registration is in sync with Entra"
+	entraAppReg.Status.LastRun = metav1.Now()
 	if entraAppReg.Spec.Owners != nil {
 		entraAppReg.Status.Owners = append([]string(nil), (*entraAppReg.Spec.Owners)...)
 	} else {

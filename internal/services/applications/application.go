@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/google/uuid"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	entrav1alpha1 "github.com/vimal-vijayan/entra-governance/api/v1alpha1"
@@ -61,6 +62,14 @@ func (s *Service) Create(ctx context.Context, entraApp entrav1alpha1.EntraAppReg
 		IsDeviceOnlyAuthSupported:  &entraApp.Spec.IsDeviceOnlyAuthSupported,
 		GroupMembershipClaims:      &entraApp.Spec.GroupMembershipClaims,
 		OAuth2RequiredPostResponse: &entraApp.Spec.OAuth2RequiredPostResponse,
+		Info: &graphappregistration.InformationalURL{
+			LogoURL:             &entraApp.Spec.InformationUrl.LogoURL,
+			MarketingURL:        &entraApp.Spec.InformationUrl.MarketingURL,
+			SupportURL:          &entraApp.Spec.InformationUrl.SupportURL,
+			TermsOfServiceURL:   &entraApp.Spec.InformationUrl.TermsOfServiceURL,
+			PrivacyStatementURL: &entraApp.Spec.InformationUrl.PrivacyStatementURL,
+		},
+		RequiredResourceAccess: requiredResourceAccessToGraphModel(entraApp.Spec.RequiredResourceAccess),
 	})
 	if err != nil {
 		return "", "", err
@@ -199,4 +208,36 @@ func buildPatchRequest(current *graphappregistration.Application, desired desire
 	}
 
 	return request, hasChanges
+}
+
+func requiredResourceAccessToGraphModel(rra []entrav1alpha1.RequiredResourceAccess) []graphappregistration.RequiredResourceAccess {
+	if rra == nil {
+		return nil
+	}
+
+	result := make([]graphappregistration.RequiredResourceAccess, len(rra))
+	for i, access := range rra {
+		result[i] = graphappregistration.RequiredResourceAccess{
+			ResourceAppID: access.ResourceAppID,
+			ResourceAccess: func(ra []entrav1alpha1.ResourceAccess) []graphappregistration.ResourceAccess {
+				if ra == nil {
+					return nil
+				}
+				res := make([]graphappregistration.ResourceAccess, len(ra))
+				for j, r := range ra {
+					parsedID, err := uuid.Parse(r.ID)
+					if err != nil {
+						parsedID = uuid.Nil
+					}
+					res[j] = graphappregistration.ResourceAccess{
+						ID:   parsedID,
+						Type: r.Type,
+					}
+				}
+				return res
+			}(access.ResourceAccess),
+		}
+	}
+
+	return result
 }

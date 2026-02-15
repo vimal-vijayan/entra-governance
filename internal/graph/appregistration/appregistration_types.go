@@ -1,5 +1,8 @@
 package appregistration
 
+// may be use azure sdk for uuid
+import "github.com/google/uuid"
+
 type Application struct {
 	ObjectID                  string
 	AppID                     string
@@ -81,8 +84,8 @@ type RequiredResourceAccess struct {
 
 // ResourceAccess identifies an OAuth 2.0 permission scope or app role
 type ResourceAccess struct {
-	ID   string `json:"id"`
-	Type string `json:"type"`
+	ID   uuid.UUID `json:"id"`
+	Type string    `json:"type"`
 }
 
 // AppRole represents an application role

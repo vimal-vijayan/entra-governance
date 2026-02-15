@@ -2,6 +2,7 @@ package appregistration
 
 import (
 	"context"
+	"strings"
 
 	graphmodels "github.com/microsoftgraph/msgraph-sdk-go/models"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -22,6 +23,14 @@ func (s *Service) Create(ctx context.Context, req CreateRequest) (*CreateRespons
 	body.SetIsFallbackPublicClient(req.IsFallbackPublicClient)
 	body.SetGroupMembershipClaims(req.GroupMembershipClaims)
 	body.SetIsDeviceOnlyAuthSupported(req.IsDeviceOnlyAuthSupported)
+	body.SetServiceManagementReference(req.ServiceManagementReference)
+
+	// set informational URLs if provided
+	body.SetInfo(informationURLToGraphModel(req.Info))
+
+	// set required resource access if provided
+	body.SetRequiredResourceAccess(requiredResourceAccessToGraphModel(req.RequiredResourceAccess))
+
 	// FIXME: setting OAuth2RequiredPostResponse is causing creation issues, need to investigate further ( unknown error )
 	// body.SetOauth2RequirePostResponse(req.OAuth2RequiredPostResponse)
 
@@ -46,8 +55,6 @@ func (s *Service) Create(ctx context.Context, req CreateRequest) (*CreateRespons
 
 	//TODO: Parental Control Settings
 
-	body.SetServiceManagementReference(req.ServiceManagementReference)
-
 	app, err := s.sdk.Applications().Post(ctx, body, nil)
 	if err != nil {
 		logger.Error(err, "failed to create application", "applicationName", req.DisplayName)
@@ -69,4 +76,48 @@ func (s *Service) Create(ctx context.Context, req CreateRequest) (*CreateRespons
 		AppClientID: appID,
 		AppObjectID: objectID,
 	}, nil
+}
+
+func informationURLToGraphModel(info *InformationalURL) *graphmodels.InformationalUrl {
+	if info == nil {
+		return nil
+	}
+	infoURL := graphmodels.NewInformationalUrl()
+	infoURL.SetLogoUrl(info.LogoURL)
+	infoURL.SetMarketingUrl(info.MarketingURL)
+	infoURL.SetSupportUrl(info.SupportURL)
+	infoURL.SetTermsOfServiceUrl(info.TermsOfServiceURL)
+	infoURL.SetPrivacyStatementUrl(info.PrivacyStatementURL)
+	return infoURL
+}
+
+func requiredResourceAccessToGraphModel(rras []RequiredResourceAccess) []graphmodels.RequiredResourceAccessable {
+	var graphRRAs []graphmodels.RequiredResourceAccessable
+	for _, rra := range rras {
+		graphRRA := graphmodels.NewRequiredResourceAccess()
+		graphRRA.SetResourceAppId(&rra.ResourceAppID)
+
+		var graphScopes []graphmodels.ResourceAccessable
+		for _, scope := range rra.ResourceAccess {
+			graphScope := graphmodels.NewResourceAccess()
+			graphScope.SetId(&scope.ID)
+			resourceAccessType := normalizeResourceAccessType(scope.Type)
+			graphScope.SetTypeEscaped(&resourceAccessType)
+			graphScopes = append(graphScopes, graphScope)
+		}
+		graphRRA.SetResourceAccess(graphScopes)
+		graphRRAs = append(graphRRAs, graphRRA)
+	}
+	return graphRRAs
+}
+
+func normalizeResourceAccessType(input string) string {
+	switch {
+	case strings.EqualFold(input, "scope"):
+		return "Scope"
+	case strings.EqualFold(input, "role"):
+		return "Role"
+	default:
+		return input
+	}
 }

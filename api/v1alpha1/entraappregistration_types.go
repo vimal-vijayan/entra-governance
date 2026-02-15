@@ -143,6 +143,35 @@ type APIApplication struct {
 	RequestedAccessTokenVersion *int `json:"requestedAccessTokenVersion,omitempty"`
 }
 
+type InformationUrl struct {
+	// +kubebuilder:validation:Optional
+	LogoURL string `json:"logoUrl,omitempty"`
+	// +kubebuilder:validation:Optional
+	MarketingURL string `json:"marketingUrl,omitempty"`
+	// +kubebuilder:validation:Optional
+	SupportURL string `json:"supportUrl,omitempty"`
+	// +kubebuilder:validation:Optional
+	TermsOfServiceURL string `json:"termsOfServiceUrl,omitempty"`
+	// +kubebuilder:validation:Optional
+	PrivacyStatementURL string `json:"privacyStatementUrl,omitempty"`
+}
+
+type RequiredResourceAccess struct {
+	// +kubebuilder:validation:Required
+	ResourceAppID string `json:"resourceAppId,omitempty"`
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:validation:MinItems=1
+	ResourceAccess []ResourceAccess `json:"resourceAccess,omitempty"`
+}
+
+type ResourceAccess struct {
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:Format=uuid
+	ID string `json:"id,omitempty"`
+	// +kubebuilder:validation:Required
+	Type string `json:"type,omitempty"`
+}
+
 type EntraAppRegistrationSpec struct {
 	// +kubebuilder:validation:Required
 	ForProvider *AppRegCredConfig `json:"forProvider"`
@@ -158,7 +187,10 @@ type EntraAppRegistrationSpec struct {
 	// +kubebuilder:validation:Optional
 	Notes string `json:"notes,omitempty"`
 	// +kubebuilder:validation:Optional
+	InformationUrl *InformationUrl `json:"info,omitempty"`
+	// +kubebuilder:validation:Optional
 	Owners *[]string `json:"owners,omitempty"`
+
 	// sign-in configuration
 	// +kubebuilder:validation:Optional
 	// +kubebuilder:validation:Enum=AzureADMyOrg;AzureADMultipleOrgs;AzureADandPersonalMicrosoftAccount;PersonalMicrosoftAccount
@@ -200,6 +232,10 @@ type EntraAppRegistrationSpec struct {
 
 	// +kubebuilder:validation:Optional
 	ServicePrincipal *ServicePrincipalParams `json:"servicePrincipal,omitempty"`
+
+	// Permissions and roles
+	// +kubebuilder:validation:Optional
+	RequiredResourceAccess []RequiredResourceAccess `json:"requiredResourceAccess,omitempty"`
 }
 
 type ServicePrincipalParams struct {

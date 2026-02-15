@@ -143,6 +143,19 @@ spec:
                 items:
                   type: string
                 type: array
+              info:
+                properties:
+                  logoUrl:
+                    type: string
+                  marketingUrl:
+                    type: string
+                  privacyStatementUrl:
+                    type: string
+                  supportUrl:
+                    type: string
+                  termsOfServiceUrl:
+                    type: string
+                type: object
               isDeviceOnlyAuthSupported:
                 type: boolean
               isFallbackPublicClient:
@@ -229,6 +242,30 @@ spec:
                       type: string
                     type: array
                 type: object
+              requiredResourceAccess:
+                description: Permissions and roles
+                items:
+                  properties:
+                    resourceAccess:
+                      items:
+                        properties:
+                          id:
+                            format: uuid
+                            type: string
+                          type:
+                            type: string
+                        required:
+                        - id
+                        - type
+                        type: object
+                      minItems: 1
+                      type: array
+                    resourceAppId:
+                      type: string
+                  required:
+                  - resourceAppId
+                  type: object
+                type: array
               samlMetadataUrl:
                 description: saml configuration
                 type: string
