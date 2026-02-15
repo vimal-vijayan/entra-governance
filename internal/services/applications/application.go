@@ -3,7 +3,8 @@ package applications
 import (
 	"context"
 	"fmt"
-	"sort"
+
+	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	entrav1alpha1 "github.com/vimal-vijayan/entra-governance/api/v1alpha1"
 	"github.com/vimal-vijayan/entra-governance/internal/client"
@@ -69,8 +70,11 @@ func (s *Service) Create(ctx context.Context, entraApp entrav1alpha1.EntraAppReg
 }
 
 func (s *Service) Delete(ctx context.Context, appID string, entraApp entrav1alpha1.EntraAppRegistration) error {
+	logger := log.FromContext(ctx).WithValues("component", "application-service", "op", "Delete", "appID", appID)
+	logger.Info("Deleting application registration")
 	graphClient, err := s.getGraphClient(ctx, entraApp)
 	if err != nil {
+		logger.Error(err, "failed to get graph client")
 		return err
 	}
 
@@ -96,6 +100,8 @@ type desiredApplication struct {
 }
 
 func (s *Service) GetAndPatch(ctx context.Context, entraApp entrav1alpha1.EntraAppRegistration) (bool, error) {
+	logger := log.FromContext(ctx).WithValues("component", "application-service", "op", "GetAndPatch", "appID", entraApp.Status.AppRegistrationObjID)
+	logger.Info("Getting application registration and patching if necessary")
 
 	if entraApp.Status.AppRegistrationObjID == "" {
 		return false, fmt.Errorf("appRegistrationObjID is empty in status")
@@ -103,12 +109,14 @@ func (s *Service) GetAndPatch(ctx context.Context, entraApp entrav1alpha1.EntraA
 
 	graphClient, err := s.getGraphClient(ctx, entraApp)
 	if err != nil {
+		logger.Error(err, "failed to get graph client")
 		return false, err
 	}
 
 	resp, err := graphClient.AppRegistration.Get(ctx, entraApp.Status.AppRegistrationObjID)
 
 	if err != nil {
+		logger.Error(err, "failed to get application registration")
 		return false, err
 	}
 
@@ -131,13 +139,18 @@ func (s *Service) GetAndPatch(ctx context.Context, entraApp entrav1alpha1.EntraA
 	}
 
 	if err := graphClient.AppRegistration.Patch(ctx, patchRequest); err != nil {
+		logger.Error(err, "failed to patch application registration")
 		return false, err
 	}
 
+	logger.Info("Successfully patched/reconciled application registration")
 	return true, nil
 }
 
 func buildPatchRequest(current *graphappregistration.Application, desired desiredApplication) (graphappregistration.PatchRequest, bool) {
+	logger := log.FromContext(context.Background()).WithValues("component", "application-service", "op", "buildPatchRequest", "appID", desired.ObjectID)
+	logger.Info("Building patch request for application registration")
+
 	request := graphappregistration.PatchRequest{
 		ObjectID: desired.ObjectID,
 	}
@@ -186,23 +199,4 @@ func buildPatchRequest(current *graphappregistration.Application, desired desire
 	}
 
 	return request, hasChanges
-}
-
-func equalStringSets(left, right []string) bool {
-	if len(left) != len(right) {
-		return false
-	}
-
-	normalizedLeft := append([]string(nil), left...)
-	normalizedRight := append([]string(nil), right...)
-	sort.Strings(normalizedLeft)
-	sort.Strings(normalizedRight)
-
-	for i := range normalizedLeft {
-		if normalizedLeft[i] != normalizedRight[i] {
-			return false
-		}
-	}
-
-	return true
 }

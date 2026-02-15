@@ -1,6 +1,28 @@
 package applications
 
-import "context"
+import (
+	"context"
+	"sort"
+)
+
+func equalStringSets(left, right []string) bool {
+	if len(left) != len(right) {
+		return false
+	}
+
+	normalizedLeft := append([]string(nil), left...)
+	normalizedRight := append([]string(nil), right...)
+	sort.Strings(normalizedLeft)
+	sort.Strings(normalizedRight)
+
+	for i := range normalizedLeft {
+		if normalizedLeft[i] != normalizedRight[i] {
+			return false
+		}
+	}
+
+	return true
+}
 
 func findMissing(desired, current []string) []string {
 	missing := []string{}
