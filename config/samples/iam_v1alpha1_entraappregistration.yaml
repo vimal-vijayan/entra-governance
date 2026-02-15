@@ -21,7 +21,7 @@ spec:
   servicePrincipal:
     enabled: false
     disableVisibilityForGuests: true
-  # signInAudience: AzureADMyOrg
+  signInAudience: AzureADMyOrg
   # allowImplicitFlow: true
   # oauth2AllowIdTokenImplicitFlow: true
   # appRoleAssignmentRequired: false

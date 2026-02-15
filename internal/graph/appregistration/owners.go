@@ -11,8 +11,12 @@ import (
 )
 
 func (s *Service) GetAppOwners(ctx context.Context, objectID string) ([]string, error) {
+	logger := log.FromContext(ctx).WithValues("component", "graph-client", "op", "GetAppOwners", "AppId", objectID)
+
+	logger.V(1).Info("Getting application owners from Microsoft Graph")
 	response, err := s.sdk.Applications().ByApplicationId(objectID).Owners().Get(ctx, nil)
 	if err != nil {
+		logger.Error(err, "failed to get application owners", "objectID", objectID)
 		return nil, err
 	}
 
@@ -28,8 +32,8 @@ func (s *Service) GetAppOwners(ctx context.Context, objectID string) ([]string, 
 	return owners, nil
 }
 
-func (s *Service) AddAppOwners(ctx context.Context, appID string, owners []string) ([]string, error) {
-	logger := log.FromContext(ctx)
+func (s *Service) AddAppOwners(ctx context.Context, appID string, owners []string) error {
+	logger := log.FromContext(ctx).WithValues("component", "graph-client", "op", "AddAppOwners", "appID", appID)
 	request := graphmodels.NewReferenceCreate()
 	for _, owner := range owners {
 		odataID := "https://graph.microsoft.com/v1.0/directoryObjects/" + owner
@@ -37,24 +41,25 @@ func (s *Service) AddAppOwners(ctx context.Context, appID string, owners []strin
 		err := s.sdk.Applications().ByApplicationId(appID).Owners().Ref().Post(ctx, request, nil)
 		if err != nil {
 			if odataError, ok := err.(*odataerrors.ODataError); ok {
-				logger.Error(err, "failed to add owner to application", "appID", appID, "ownerID", owner)
-				logger.Error(err, "OData error code", "code", *odataError.GetErrorEscaped().GetMessage())
+				logger.V(1).Error(err, "OData error code", "code", *odataError.GetErrorEscaped().GetMessage())
 				// If the object is already added as an owner by IDM. the error will be skipped
 				if odataError.GetErrorEscaped().GetMessage() != nil && strings.Contains(*odataError.GetErrorEscaped().GetMessage(), "already exist") {
-					logger.Info("Owner already exists for the application, skipping addition", "appID", appID, "ownerID", owner)
+					logger.V(1).Info("Owner already exists for the application, skipping addition", "appID", appID, "ownerID", owner)
 					continue
 				}
 			}
-			return nil, err
+			return err
 		}
 	}
-	return owners, nil
+	return nil
 }
 
 func (s *Service) RemoveAppOwners(ctx context.Context, appID string, owners []string) error {
+	logger := log.FromContext(ctx).WithValues("component", "graph-client", "op", "RemoveAppOwners", "appID", appID)
 	for _, owner := range owners {
 		err := s.sdk.Applications().ByApplicationId(appID).Owners().ByDirectoryObjectId(owner).Ref().Delete(ctx, nil)
 		if err != nil {
+			logger.V(1).Error(err, "failed to remove owner from application", "appID", appID, "ownerID", owner)
 			return err
 		}
 	}

@@ -16,7 +16,7 @@ type API interface {
 	Patch(ctx context.Context, req PatchRequest) error
 	Delete(ctx context.Context, objectID string) error
 	GetAppOwners(ctx context.Context, objectID string) ([]string, error)
-	AddAppOwners(ctx context.Context, appID string, owners []string) ([]string, error)
+	AddAppOwners(ctx context.Context, appID string, owners []string) error
 	RemoveAppOwners(ctx context.Context, appID string, owners []string) error
 }
 
